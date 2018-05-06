@@ -1,0 +1,30 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Utilities;
+using Utilities.Extensions;
+using Utilities.Types;
+
+namespace TinyConfig.Marshallers
+{
+    class StringMarshaller : OneLineTypeMarshaller<string>
+    {
+        public StringMarshaller() : base(true)
+        {
+
+        }
+
+        public override bool TryPack(string value, out string result)
+        {
+            result = value;
+            return true;
+        }
+
+        public override bool TryUnpack(string packed, out string result)
+        {
+            result = packed;
+            return true;
+        }
+    }
+}
