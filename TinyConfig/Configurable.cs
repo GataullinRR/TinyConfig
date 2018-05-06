@@ -14,6 +14,8 @@ namespace TinyConfig
     {
         const string CONFIG_NAME_TEMPLATE = "{0}.ini";
 
+        public static readonly HashSet<string> _openedFiles = new HashSet<string>();
+
         public static string  BaseDirectory { get; }
 
         static Configurable()
@@ -28,7 +30,11 @@ namespace TinyConfig
 
         public static ConfigAccessor CreateConfig(Type owner)
         {
-            return CreateConfig(owner.FullName, "");
+            return CreateConfig(owner.FullName);
+        }
+        public static ConfigAccessor CreateConfig(string configFileName)
+        {
+            return CreateConfig(configFileName, "", Encoding.UTF8);
         }
         public static ConfigAccessor CreateConfig(string configFileName, string relativeDirPath)
         {
@@ -38,10 +44,19 @@ namespace TinyConfig
         {
             var configPath = Path
                 .Combine(BaseDirectory, relativeDirPath, CONFIG_NAME_TEMPLATE.Format(configFileName as object));
+            if (_openedFiles.Contains(configPath))
+            {
+                throw new Exception("Данный конфигурационный файл уже используется.");
+            }
+
             FileStream config = IOUtils.TryCreateFileIfNotExistOrOpenOrNull(configPath);
             if (config == null)
             {
-                throw null;
+                throw new Exception("Не удается получить доступ к файлу.");
+            }
+            else
+            {
+                _openedFiles.Add(configPath);
             }
 
             return new ConfigAccessor(new CachedConfig(config, encoding));
