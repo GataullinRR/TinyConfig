@@ -53,6 +53,7 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
+    <Compile Include="ConfigAccessor_Tests.cs" />
     <Compile Include="Configurable_Tests.cs" />
     <Compile Include="KVPExtractor_Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -64,6 +65,10 @@
     <ProjectReference Include="..\..\GeneralPurposeLibs\Utilities\Utilities.csproj">
       <Project>{b76d158d-0ad4-4656-848b-2b33e2684e08}</Project>
       <Name>Utilities</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\GeneralPurposeLibs\Vectors\Vectors.csproj">
+      <Project>{839c7d8a-8283-4969-95dd-5e961aa9f922}</Project>
+      <Name>Vectors</Name>
     </ProjectReference>
     <ProjectReference Include="..\TinyConfig\TinyConfig.csproj">
       <Project>{05BDF1D9-7BEA-4711-AB5A-115A35CEBF6C}</Project>

@@ -105,7 +105,7 @@ namespace TinyConfig
     {
         readonly CachedConfig _config;
         readonly HashSet<string> _proxyKeys = new HashSet<string>();
-        List<TypeMarshaller> _marshallers = new List<TypeMarshaller>()
+        readonly HashSet<TypeMarshaller> _marshallers = new HashSet<TypeMarshaller>()
         {
             new BooleanMarshaller(),
             new SByteMarshaller(),
@@ -124,6 +124,14 @@ namespace TinyConfig
         internal ConfigAccessor(CachedConfig config)
         {
             _config = config;
+        }
+
+        public ConfigAccessor AddMarshaller<T>() 
+            where T : TypeMarshaller, new()
+        {
+            _marshallers.Add(new T());
+
+            return this;
         }
 
         public ConfigProxy<T> ReadValue<T>(T fallbackValue, [CallerMemberName]string key = "")

@@ -10,6 +10,8 @@ namespace TinyConfig
 {
     public abstract class TypeMarshaller
     {
+        public TypeMarshaller() { }
+
         public abstract Type ValueType { get; }
         public abstract bool IsAlwaysMultiline { get; }
 
