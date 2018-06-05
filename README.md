@@ -5,19 +5,19 @@
 
 # Пример использования библиотеки:
 ```CSharp
-        static readonly ConfigAccessor _config = Configurable.CreateConfig("ExampleConfigFile");
-        static readonly ConfigProxy<int> SOME_INT = _config.ReadValue(100);
-        static readonly ConfigProxy<string> SOME_MULTILINE_STRING_INT = _config.ReadValue("'Hello' \n\r all!");
+    static readonly ConfigAccessor _config = Configurable.CreateConfig("ExampleConfigFile");
+    static readonly ConfigProxy<int> SOME_INT = _config.ReadValue(100);
+    static readonly ConfigProxy<string> SOME_MULTILINE_STRING_INT = _config.ReadValue("'Hello' \n\r all!");
 
-        static void Main(string[] args)
-        {
-            Console.WriteLine($"SOME_INT: {SOME_INT}");
-            Console.WriteLine($"SOME_MULTILINE_STRING_INT: {SOME_MULTILINE_STRING_INT}");
-            SOME_MULTILINE_STRING_INT.Value = "New value";
-            Console.WriteLine($"SOME_MULTILINE_STRING_INT(changed): {SOME_MULTILINE_STRING_INT}");
+    static void Main(string[] args)
+    {
+        Console.WriteLine($"SOME_INT: {SOME_INT}");
+        Console.WriteLine($"SOME_MULTILINE_STRING_INT: {SOME_MULTILINE_STRING_INT}");
+        SOME_MULTILINE_STRING_INT.Value = "New value";
+        Console.WriteLine($"SOME_MULTILINE_STRING_INT(changed): {SOME_MULTILINE_STRING_INT}");
 
-            Console.ReadKey();
-        }
+        Console.ReadKey();
+    }
 ```   
 Вывод:
 
