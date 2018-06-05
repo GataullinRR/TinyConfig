@@ -19,7 +19,7 @@ static void Main(string[] args)
     Console.ReadKey();
 }
 ```   
-Вывод:
+Консольный вывод:
 
     SOME_INT: 100
     SOME_MULTILINE_STRING_INT: 'Hello'
