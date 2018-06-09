@@ -57,6 +57,7 @@
     <Compile Include="Configurable_Tests.cs" />
     <Compile Include="KVPExtractor_Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TypeMarshaller_Tests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

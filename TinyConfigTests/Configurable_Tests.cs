@@ -23,6 +23,20 @@ namespace TinyConfig.Tests
         }
 
         [Test()]
+        public void CreateConfig_ArrayValueTest()
+        {
+            var config = Configurable.CreateConfig("CreateConfig_ArrayValueTest");
+            config.ReadValue(10, "SomeInt32");
+            var doubleAccessor = config.ReadValue(new double[] { -1, 2, 2.345 }, "SomeDoubleArr");
+
+            var actual = config.ToString();
+            var expected = @"SomeInt32 =10
+SomeDoubleArr =-1 2 2.345" + Global.NL;
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
         public void CreateAndModify_Test()
         {
             var config = Configurable.CreateConfig("CreateAndModify", "");
@@ -34,6 +48,19 @@ namespace TinyConfig.Tests
         }
 
         [Test()]
+        public void CreateAndModifyArray_Test()
+        {
+            var config = Configurable.CreateConfig("CreateAndModifyArray");
+            var accessor = config.ReadValue(new[] { 10, 20, 55 }, "SomeInt32Array");
+
+            var expected = Global.Random.GenerateUnique(0, 1000, 10).ToArray();
+            accessor.Value = expected;
+            var actual = accessor.Value;
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
         public void CreateTwoFieldsWithSameName_Test()
         {
             var config = Configurable.CreateConfig("CreateTwoFieldsWithSameName", "");
@@ -41,7 +68,7 @@ namespace TinyConfig.Tests
             config.ReadValue(123, "SomeValue");
 
             var actual = config.ToString();
-            var expected = "SomeValue = #'ABC'" + Global.NL;
+            var expected = "SomeValue =#'ABC'" + Global.NL;
 
             Assert.AreEqual(expected, actual);
         }

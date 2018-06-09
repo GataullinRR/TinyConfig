@@ -82,34 +82,4 @@ namespace TinyConfig
             }
         }
     }
-
-    //public abstract class TypeMarshaller
-    //{
-    //    public abstract Type ValueType { get; }
-
-    //    public abstract bool TryPack(object value, out string result);
-    //    public abstract bool TryUnpack(string packed, out object result);
-    //}
-
-    //public abstract class TypeMarshaller<T> : TypeMarshaller
-    //{
-    //    public override sealed Type ValueType { get; } = typeof(T);
-
-    //    public override sealed bool TryPack(object value, out string result)
-    //    {
-    //        return TryPack((T)value, out result);
-    //    }
-    //    public override sealed bool TryUnpack(string packed, out object result)
-    //    {
-    //        var isOk = TryUnpack(packed, out T specificResult);
-    //        result = specificResult;
-
-    //        return isOk;
-    //    }
-
-    //    public abstract bool TryPack(T value, out string result);
-    //    public abstract bool TryUnpack(string packed, out T result);
-    //}
-
-
 }

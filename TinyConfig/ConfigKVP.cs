@@ -2,7 +2,6 @@
 
 namespace TinyConfig
 {
-
     internal class ConfigKVP : IEquatable<ConfigKVP>
     {
         public string Key { get; }
@@ -19,7 +18,7 @@ namespace TinyConfig
             var shieldedValue = Value.Value
                 .Replace(Constants.BLOCK_MARK.ToString(), string.Concat(Constants.BLOCK_MARK, Constants.BLOCK_MARK));
             return Value.IsMultiline
-                ? $"{Key} {Constants.KVP_SEPERATOR} {Constants.MULTILUNE_VALUE_MARK}" +
+                ? $"{Key} {Constants.KVP_SEPERATOR}{Constants.MULTILUNE_VALUE_MARK}" +
                     $"{Constants.BLOCK_MARK}{shieldedValue}{Constants.BLOCK_MARK}"
                 : $"{Key} {Constants.KVP_SEPERATOR}{shieldedValue}";
         }

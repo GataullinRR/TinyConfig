@@ -8,7 +8,7 @@ using Utilities.Types;
 
 namespace TinyConfig.Marshallers
 {
-    class SingleMarshaller : OneLineTypeMarshaller<float>
+    class SingleMarshaller : SpaceArraySeparatorTypeMarshaller<float>
     {
         public override bool TryPack(float value, out string result)
         {

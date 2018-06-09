@@ -14,60 +14,6 @@ using Utilities.Extensions;
 
 namespace TinyConfig
 {
-    class DisposingIgnoreStream : Stream
-    {
-        readonly Stream _baseStream;
-
-        public override bool CanRead => _baseStream.CanRead;
-
-        public override bool CanSeek => _baseStream.CanSeek;
-
-        public override bool CanWrite => _baseStream.CanWrite;
-
-        public override long Length => _baseStream.Length;
-
-        public override long Position
-        {
-            get => _baseStream.Position;
-            set => _baseStream.Position = value;
-        }
-
-        public DisposingIgnoreStream(Stream baseStream)
-        {
-            _baseStream = baseStream;
-        }
-
-        public override void Flush()
-        {
-            _baseStream.Flush();
-        }
-
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            return _baseStream.Read(buffer, offset, count);
-        }
-
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            return _baseStream.Seek(offset, origin);
-        }
-
-        public override void SetLength(long value)
-        {
-            _baseStream.SetLength(value);
-        }
-
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            _baseStream.Read(buffer, offset, count);
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            
-        }
-    }
-
     class CachedConfig
     {
         readonly FileStream _file;
@@ -140,7 +86,8 @@ namespace TinyConfig
             {
                 return new ConfigProxy<T>(fallbackValue, _ => { });
             }
-            var marshaller = _marshallers.SingleOrDefault(m => m.ValueType == typeof(T));
+            var valueType = typeof(T).IsArray ? typeof(T).GetElementType() : typeof(T);
+            var marshaller = _marshallers.SingleOrDefault(m => m.ValueType == valueType);
             if (marshaller == null)
             {
                 throw new NotSupportedException();
@@ -157,7 +104,7 @@ namespace TinyConfig
             {
                 if (kvp.Key == key)
                 {
-                    var isParsed = marshaller.TryUnpack(kvp.Value, out object parsedValue);
+                    var isParsed = marshaller.TryUnpack(kvp.Value, out dynamic parsedValue);
                     readValue = isParsed ? (T)parsedValue : fallbackValue;
                     validKVPFound = isParsed;
                     if (validKVPFound)

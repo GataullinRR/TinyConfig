@@ -14,7 +14,7 @@ namespace TinyConfig.Tests
     [TestFixture()]
     public class ConfigAccessor_Tests
     {
-        class VectorMarshaller : OneLineTypeMarshaller<V2>
+        class VectorMarshaller : TypeMarshaller<V2>
         {
             public override bool TryPack(V2 value, out string result)
             {
@@ -36,6 +36,7 @@ namespace TinyConfig.Tests
                 {
                     return str
                         .SkipWhile(c => c != ':')
+                        .Skip(1)
                         .TakeWhile(c => !char.IsWhiteSpace(c))
                         .Aggregate()
                         .ParseToDoubleInvariant();
@@ -50,6 +51,13 @@ namespace TinyConfig.Tests
             var config = Configurable.CreateConfig("AddMarshaller").AddMarshaller<VectorMarshaller>();
             config.ReadValue(10, "SomeInt32");
             config.ReadValue(new V2(-9, 9), "SomeV2");
+
+            var actual = config.ToString();
+            var expected = @"SomeInt32 =10
+SomeV2 =X:-9 Y:9
+";
+
+            Assert.AreEqual(expected, actual);
         }
     }
 }
