@@ -1,11 +1,7 @@
 # TinyConfig
-Библиотека для работы с конфигурационными файлами. 
+Библиотека для работы с конфигурационными файлами. Работает под .NET 4.5.2
 
-  На тот случай, если вы случайно (а другого и быть не может) сюда попали, предупреждаю, что этот репозиторий создан для практики работы с гитом.
-
-Библиотека работает под .NET 4.5.2
-
-# Пример использования библиотеки:
+# Пример:
 ```CSharp
 static readonly ConfigAccessor _config = Configurable.CreateConfig("ExampleConfigFile");
 static readonly ConfigProxy<int> SOME_INT = _config.ReadValue(100);
