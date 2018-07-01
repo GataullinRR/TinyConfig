@@ -5,5 +5,6 @@
         public const char MULTILUNE_VALUE_MARK = '#';
         public const char BLOCK_MARK = '\'';
         public const string KVP_SEPERATOR = "=";
+        public const string COMMENT_SEPARATOR = @"\\";
     }
 }

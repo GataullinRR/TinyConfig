@@ -21,17 +21,26 @@ namespace TinyConfig
                           .Aggregate();
                 if (isOneLineKVP())
                 {
-                    var value = line.Substring(line.IndexOf(Constants.KVP_SEPERATOR) + 1);
+                    var valueStartIndex = line.IndexOf(Constants.KVP_SEPERATOR) + 1;
+                    var commentBlockStartIndex = line.IndexOf(Constants.COMMENT_SEPARATOR);
+                    var value = commentBlockStartIndex < 0 
+                                ? line.Substring(valueStartIndex)
+                                : line.Substring(valueStartIndex, commentBlockStartIndex - valueStartIndex);
+                    var comment = commentBlockStartIndex < 0
+                                ? null
+                                : line.Substring(commentBlockStartIndex + Constants.COMMENT_SEPARATOR.Length);
 
-                    yield return new ConfigKVP(key, new ConfigValue(value, false));
+                    yield return new ConfigKVP(key, new ConfigValue(value, false), comment);
                 }
                 else
                 {
                     var value = line.Substring(line.IndexOf(Constants.BLOCK_MARK) + 1) + Global.NL;
+                    string commentary = null;
                     StringBuilder valueAsStr = new StringBuilder();
                     bool isBlockClosed = false;
                     while (true)
                     {
+                        var valueBlockEnd = 0;
                         for (int i = 1; i < value.Length; i++)
                         {
                             var prev = value[i - 1];
@@ -45,6 +54,7 @@ namespace TinyConfig
                             else if (prev == Constants.BLOCK_MARK && curr != Constants.BLOCK_MARK)
                             {
                                 isBlockClosed = true;
+                                valueBlockEnd = i - 1;
                                 break;
                             }
                             else
@@ -60,6 +70,14 @@ namespace TinyConfig
 
                         if (isBlockClosed)
                         {
+                            var commentBlockStart = line
+                                .FindAll(Constants.COMMENT_SEPARATOR)
+                                .Where(i => i > valueBlockEnd)
+                                .FirstOrDefault(-1);
+                            if (commentBlockStart >= 0)
+                            {
+                                commentary = line.Substring(commentBlockStart + Constants.COMMENT_SEPARATOR.Length);
+                            }
                             break;
                         }
                         else if (lineEnumerator.MoveNext())
@@ -72,7 +90,7 @@ namespace TinyConfig
                         }
                     }
 
-                    yield return new ConfigKVP(key, new ConfigValue(valueAsStr.ToString(), true));
+                    yield return new ConfigKVP(key, new ConfigValue(valueAsStr.ToString(), true), commentary);
                 }
 
                 bool isOneLineKVP()

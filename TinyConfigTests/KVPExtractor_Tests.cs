@@ -23,8 +23,8 @@ fff=2";
             var actual = KVPExtractor.ExtractAll(new StreamReader(new MemoryStream(data.GetBytes(Encoding.UTF8))));
             var expected = new[]
             {
-                new ConfigKVP ("KEY1", new ConfigValue("Value", false)),
-                new ConfigKVP ("fff", new ConfigValue("2", false)),
+                new ConfigKVP ("KEY1", new ConfigValue("Value", false), null),
+                new ConfigKVP ("fff", new ConfigValue("2", false), null),
             };
 
             Assert.AreEqual(expected, actual);
@@ -42,9 +42,9 @@ KEY3=#'''Hel''''lo '''''";
             var actual = KVPExtractor.ExtractAll(new StreamReader(new MemoryStream(data.GetBytes(Encoding.UTF8))));
             var expected = new[]
             {
-                new ConfigKVP("KEY1", new ConfigValue("Value 'line1'" + Global.NL + "line2" + Global.NL + "l'i'ne3", true)),
-                new ConfigKVP ("KEY2", new ConfigValue("Hello 'friend'!", true)),
-                new ConfigKVP ("KEY3", new ConfigValue("'Hel''lo ''", true)),
+                new ConfigKVP("KEY1", new ConfigValue("Value 'line1'" + Global.NL + "line2" + Global.NL + "l'i'ne3", true), null),
+                new ConfigKVP ("KEY2", new ConfigValue("Hello 'friend'!", true), null),
+                new ConfigKVP ("KEY3", new ConfigValue("'Hel''lo ''", true), null),
             };
 
             Assert.AreEqual(expected, actual);
@@ -60,9 +60,66 @@ KEY3= eeHel''''lo";
             var actual = KVPExtractor.ExtractAll(new StreamReader(new MemoryStream(data.GetBytes(Encoding.UTF8))));
             var expected = new[]
             {
-                new ConfigKVP ("KEY1", new ConfigValue(" Value", false)),
-                new ConfigKVP("KEY2", new ConfigValue("Hello 'friend'!", true)),
-                new ConfigKVP("KEY3", new ConfigValue(" eeHel''''lo", false)),
+                new ConfigKVP ("KEY1", new ConfigValue(" Value", false), null),
+                new ConfigKVP("KEY2", new ConfigValue("Hello 'friend'!", true), null),
+                new ConfigKVP("KEY3", new ConfigValue(" eeHel''''lo", false), null),
+            };
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void ExtractAll_MixedKVPsAndCommentaryTest1()
+        {
+            var data = @"SomeUInt8 =3
+SomeInt32Arr =1 2 3\\It is int[]
+SomeString =#'Hello'
+";
+
+            var actual = KVPExtractor.ExtractAll(new StreamReader(new MemoryStream(data.GetBytes(Encoding.UTF8))));
+            var expected = new[]
+            {
+                new ConfigKVP("SomeUInt8", new ConfigValue("3", false), null),
+                new ConfigKVP("SomeInt32Arr", new ConfigValue("1 2 3", false), "It is int[]"),
+                new ConfigKVP("SomeString", new ConfigValue("Hello", true), null),
+            };
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void ExtractAll_MixedKVPsAndCommentaryTest2()
+        {
+            var data = @"KEY1 = Value \\comment1
+KEY2= # 'Hello ''friend''!' \\ comment2 
+KEY3= eeHel''''lo
+KEY4=123";
+
+            var actual = KVPExtractor.ExtractAll(new StreamReader(new MemoryStream(data.GetBytes(Encoding.UTF8))));
+            var expected = new[]
+            {
+                new ConfigKVP ("KEY1", new ConfigValue(" Value ", false), "comment1"),
+                new ConfigKVP("KEY2", new ConfigValue("Hello 'friend'!", true), " comment2 "),
+                new ConfigKVP("KEY3", new ConfigValue(" eeHel''''lo", false), null),
+                 new ConfigKVP("KEY4", new ConfigValue("123", false), " comment3 "),
+            };
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void ExtractAll_CommentaryInValueTest()
+        {
+            var data = @"KEY1 =# 'Value \\bad comment' \\good comment1
+KEY2= # '\\bad commentHello ''friend''!' \\ good comment2
+KEY3=(value begin)\\bad comment(value end) \\ good comment3";
+
+            var actual = KVPExtractor.ExtractAll(new StreamReader(new MemoryStream(data.GetBytes(Encoding.UTF8))));
+            var expected = new[]
+            {
+                new ConfigKVP ("KEY1", new ConfigValue(@"Value \\bad comment", true), "good comment1"),
+                new ConfigKVP("KEY2", new ConfigValue(@"\\bad commentHello 'friend'!", true), " good comment2"),
+                new ConfigKVP("KEY3", new ConfigValue("(value begin)", false), "(value begin)\\bad comment(value end) \\ good comment3"),
             };
 
             Assert.AreEqual(expected, actual);

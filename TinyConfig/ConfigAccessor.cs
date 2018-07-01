@@ -84,7 +84,8 @@ namespace TinyConfig
         {
             if (_proxyKeys.Contains(key))
             {
-                return new ConfigProxy<T>(fallbackValue, _ => { });
+                // Только readonly доступ к уже используемому ConfigProxy
+                return new ConfigProxy<T>(fallbackValue, null, _ => { }, _ => null);
             }
             var valueType = typeof(T).IsArray ? typeof(T).GetElementType() : typeof(T);
             var marshaller = _marshallers.SingleOrDefault(m => m.ValueType == valueType);
@@ -98,6 +99,7 @@ namespace TinyConfig
             }
 
             T readValue = fallbackValue;
+            string readCeommentary = null;
             var kvpIndex = 0;
             bool validKVPFound = false;
             foreach (var kvp in _config.KVPs)
@@ -106,6 +108,7 @@ namespace TinyConfig
                 {
                     var isParsed = marshaller.TryUnpack(kvp.Value, out dynamic parsedValue);
                     readValue = isParsed ? (T)parsedValue : fallbackValue;
+                    readCeommentary = kvp.Commentary;
                     validKVPFound = isParsed;
                     if (validKVPFound)
                     {
@@ -120,20 +123,23 @@ namespace TinyConfig
             }
 
             _proxyKeys.Add(key);
-            return new ConfigProxy<T>(readValue, updateKVPInConfigFile);
+            ConfigProxy<T> proxy = null;
+            proxy = new ConfigProxy<T>(readValue, readCeommentary, updateValueInConfigFile, updateCommentaryInConfigFile);
+            return proxy;
 
             void appendKVP()
             {
-                var kvp = pack(fallbackValue);
+                var kvp = pack(fallbackValue, null);
                 _config.KVPs.Add(kvp);
             }
-            ConfigKVP pack(T value)
+            ConfigKVP pack(T value, string commentary)
             {
                 var isOk = marshaller.TryPack(value, out ConfigValue packedValue);
 
                 if (isOk)
                 {
-                    return new ConfigKVP(key, packedValue);
+                    commentary = commentary?.Replace(Global.NL, "");
+                    return new ConfigKVP(key, packedValue, commentary);
                 }
                 else
                 {
@@ -144,9 +150,14 @@ namespace TinyConfig
             {
                 return key?.All(c => char.IsLetterOrDigit(c) || c == '_') ?? false;
             }
-            void updateKVPInConfigFile(T newValue)
+            void updateValueInConfigFile(T newValue)
             {
-                _config.KVPs[kvpIndex] = pack(newValue);
+                _config.KVPs[kvpIndex] = pack(newValue, null);
+            }
+            string updateCommentaryInConfigFile(string newValue)
+            {
+                _config.KVPs[kvpIndex] = pack(proxy.Value, newValue);
+                return _config.KVPs[kvpIndex].Commentary;
             }
         }
 
