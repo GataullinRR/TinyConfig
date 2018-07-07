@@ -64,12 +64,21 @@ namespace TinyConfig
             new UInt64Marshaller(),
             new SingleMarshaller(),
             new DoubleMarshaller(),
-            new StringMarshaller()
+            new StringMarshaller(),
+
+            new EnumMarshaller()
         };
 
         internal ConfigAccessor(CachedConfig config)
         {
             _config = config;
+        }
+
+        public ConfigAccessor Clear()
+        {
+            _config.KVPs.Clear();
+
+            return this;
         }
 
         public ConfigAccessor AddMarshaller<T>() 
@@ -88,7 +97,10 @@ namespace TinyConfig
                 return new ConfigProxy<T>(fallbackValue, null, _ => { }, _ => null);
             }
             var valueType = typeof(T).IsArray ? typeof(T).GetElementType() : typeof(T);
-            var marshaller = _marshallers.SingleOrDefault(m => m.ValueType == valueType);
+
+            var marshaller = _marshallers
+                                .OrderBy(m => typeof(ExactTypeMarshaller).IsAssignableFrom(m.GetType()))
+                                .FirstOrDefault(m => m.IsTypeSupported(valueType));
             if (marshaller == null)
             {
                 throw new NotSupportedException();
@@ -106,8 +118,8 @@ namespace TinyConfig
             {
                 if (kvp.Key == key)
                 {
-                    var isParsed = marshaller.TryUnpack(kvp.Value, out dynamic parsedValue);
-                    readValue = isParsed ? (T)parsedValue : fallbackValue;
+                    var isParsed = marshaller.TryUnpack(kvp.Value, valueType, out dynamic parsedValue);
+                    readValue = isParsed ? cast(parsedValue) : fallbackValue;
                     readCeommentary = kvp.Commentary;
                     validKVPFound = isParsed;
                     if (validKVPFound)
@@ -158,6 +170,79 @@ namespace TinyConfig
             {
                 _config.KVPs[kvpIndex] = pack(proxy.Value, newValue);
                 return _config.KVPs[kvpIndex].Commentary;
+            }
+            T cast(dynamic value)
+            {
+                var valueT = value.GetType();
+                var castToT = typeof(T);
+                if (castToT.IsArray)
+                {
+                    return castAsArrayElement();
+                }
+                else
+                {
+                    return castAsSingleElement();
+                }
+
+                ///////////////////////////
+
+                T castAsArrayElement()
+                {
+                    var isEmptyArray = ((Array)value).Length == 0;
+                    var isArrayOfT = valueT.IsArray
+                        ? (isEmptyArray ? false : value[0].GetType() == castToT.GetElementType())
+                        : false;
+                    if (isArrayOfT)
+                    {
+                        var arr = (Array)value;
+                        dynamic result = Array.CreateInstance(castToT.GetElementType(), arr.Length);
+                        var i = 0;
+                        foreach (var item in arr)
+                        {
+                            result.SetValue(item, i);
+                            i++;
+                        }
+
+                        return result;
+                    }
+                    else if (isEmptyArray)
+                    {
+                        dynamic result = Array.CreateInstance(castToT.GetElementType(), 0);
+
+                        return result;
+                    }
+                    else
+                    {
+                        throw new ArgumentException();
+                    }
+                }
+
+                T castAsSingleElement()
+                {
+                    var isArrayOfT = valueT.IsArray
+                        ? (((Array)value).Length > 0 ? value[0].GetType() == castToT : false)
+                        : false;
+                    if (isArrayOfT)
+                    {
+                        var arr = (Array)value;
+                        if (arr.Length == 1)
+                        {
+                            return (T)value[0];
+                        }
+                        else
+                        {
+                            throw new ArgumentException();
+                        }
+                    }
+                    else if (valueT == castToT)
+                    {
+                        return (T)value;
+                    }
+                    else
+                    {
+                        throw new ArgumentException();
+                    }
+                }
             }
         }
 

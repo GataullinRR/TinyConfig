@@ -57,13 +57,23 @@ SomeDouble =130" + Global.NL;
         {
             var config = Configurable.CreateConfig("CreateConfig_ArrayValueTest");
             config.ReadValue(10, "SomeInt32");
-            var doubleAccessor = config.ReadValue(new double[] { -1, 2, 2.345 }, "SomeDoubleArr");
+            config.ReadValue(new double[] { -1, 2, 2.345 }, "SomeDoubleArr");
+            config.ReadValue(new double[] { }, "SomeEmptyDoubleArr");
 
             var actual = config.ToString();
             var expected = @"SomeInt32 =10
-SomeDoubleArr =-1 2 2.345" + Global.NL;
+SomeDoubleArr =-1 2 2.345
+SomeEmptyDoubleArr =" + Global.NL;
 
             Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void CreateConfig_NullableValueTypesSupportTest()
+        {
+            var config = Configurable.CreateConfig("CreateConfig_NullableValueTypesSupportTest");
+            Assert.Throws<NotSupportedException>(() => config.ReadValue<int?>(null, "SomeInt32"));
+            Assert.Throws<NotSupportedException>(() => config.ReadValue(new double?[] { null, -1, 2, 2.345, null }, "SomeDoubleArr"));
         }
 
         [Test()]
@@ -140,6 +150,39 @@ SomeString =#'Hello'" + Global.NL;
             var actual = accessor.Value;
 
             Assert.AreEqual(expected, actual);
+        }
+
+        public enum ABC
+        {
+            A, B, C
+        }
+        [Test()]
+        public void CreateAndModifyEnum_Test()
+        {
+            var config = Configurable.CreateConfig("CreateAndModifyEnum_Test").Clear();
+            var accessor1 = config.ReadValue(new[] { ABC.A, ABC.B, ABC.C }, "EnumArr");
+            var accessor2 = config.ReadValue(ABC.B, "Enum");
+
+            {
+                var actual1 = config.ToString();
+                var expected1 = @"EnumArr =A B C
+Enum =B" + Global.NL;
+
+                Assert.AreEqual(expected1, actual1);
+            }
+
+            {
+                accessor1.Value[1] = ABC.C;
+                accessor2.Value = ABC.C;
+                accessor1.Commentary = "it is array";
+                accessor2.Commentary = "it is single value";
+
+                var actual2 = config.ToString();
+                var expected2 = @"EnumArr =A C C\\it is array
+Enum =C\\it is single value" + Global.NL;
+
+                Assert.AreEqual(expected2, actual2);
+            }
         }
 
         [Test()]

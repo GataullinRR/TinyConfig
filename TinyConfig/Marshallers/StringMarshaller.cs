@@ -8,7 +8,7 @@ using Utilities.Types;
 
 namespace TinyConfig.Marshallers
 {
-    class StringMarshaller : TypeMarshaller<string>
+    class StringMarshaller : ExactTypeMarshaller<string>
     {
         public StringMarshaller() : base(true, null)
         {

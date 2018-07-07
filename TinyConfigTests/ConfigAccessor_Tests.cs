@@ -14,7 +14,7 @@ namespace TinyConfig.Tests
     [TestFixture()]
     public class ConfigAccessor_Tests
     {
-        class VectorMarshaller : TypeMarshaller<V2>
+        class VectorMarshaller : ExactTypeMarshaller<V2>
         {
             public override bool TryPack(V2 value, out string result)
             {

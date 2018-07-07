@@ -30,7 +30,7 @@ namespace TinyConfig.Tests
         public void TryPackString_ArrayTest()
         {
             var m = new StringMarshaller();
-            Assert.Throws<Exception>(() => m.TryPack(new string[] { "one", "two!" }, out ConfigValue result));
+            Assert.Throws<ArrayPackingNotSupportedException>(() => m.TryPack(new string[] { "one", "two!" }, out ConfigValue result));
         }
     }
 }
