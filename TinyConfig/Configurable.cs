@@ -128,7 +128,7 @@ namespace TinyConfig
             }
 
             readonly Stream _baseStream;
-            readonly SectionsFinder.Section[] _sections;
+            readonly SectionsFinder.SectionInfo[] _sections;
             readonly List<StreamInfo> _streams = new List<StreamInfo>();
 
             public StreamAggregator(Stream baseStream)
@@ -142,7 +142,7 @@ namespace TinyConfig
 
             public Stream CreateStream(string sectionName)
             {
-                var sectionIndex = _sections.Find(s => s.Name == sectionName);
+                var sectionIndex = _sections.Find(s => s.Section.FullName == sectionName);
                 var section = sectionIndex > 0 ? _sections[sectionIndex] : null;
 
                 if (_streams.Any(si => si.SectionName == sectionName))

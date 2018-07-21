@@ -12,18 +12,18 @@ namespace TinyConfig
 {
     static class SectionsFinder
     {
-        public class Section
+        public class SectionInfo
         {
-            public string Name { get; }
+            public Section Section { get; }
             public IEnumerable<string> FullSection { get; }
             public IEnumerable<string> Body { get; }
             public IntInterval SectionLocation { get; }
             public IntInterval SectionBodyLocation { get; }
 
-            public Section
-                (string name, IEnumerable<string> section, IEnumerable<string> body, IntInterval sectionLocation, IntInterval sectionBodyLocation)
+            public SectionInfo
+                (string sectionName, IEnumerable<string> section, IEnumerable<string> body, IntInterval sectionLocation, IntInterval sectionBodyLocation)
             {
-                Name = name;
+                Section = new Section(sectionName);
                 FullSection = section;
                 Body = body;
                 SectionLocation = sectionLocation;
@@ -32,11 +32,11 @@ namespace TinyConfig
 
             public override string ToString()
             {
-                return new { Name, SectionLocation, SectionBodyLocation, Body = Body.AsMultilineString() }.ToString();
+                return new { Section, SectionLocation, SectionBodyLocation, Body = Body.AsMultilineString() }.ToString();
             }
         }
 
-        public static IEnumerable<Section> GetSections(IEnumerable<string> iniFile)
+        public static IEnumerable<SectionInfo> GetSections(IEnumerable<string> iniFile)
         {
             var readSections = new List<string>();
             string currentSectionName = null;
@@ -63,12 +63,12 @@ namespace TinyConfig
                         }
                         var body = iniFile.Skip(bodyLocation.From).Take(bodyLocation.Len);
                         var section = iniFile.Skip(sectionLoaction.From).Take(sectionLoaction.Len);
-                        yield return new Section(currentSectionName, section, body, sectionLoaction, bodyLocation);
+                        yield return new SectionInfo(currentSectionName, section, body, sectionLoaction, bodyLocation);
                         readSections.Add(currentSectionName);
                     }
                     if (lineEnumerator.IsLastElement && sectionName != null && readSections.NotContains(sectionName))
                     {
-                        yield return new Section(sectionName, new string[0], new string[0], IntInterval.Zero, IntInterval.Zero);
+                        yield return new SectionInfo(sectionName, new string[0], new string[0], IntInterval.Zero, IntInterval.Zero);
                     }
                     linesInCurrentSection = 0;
                     currentSectionName = sectionName;
@@ -94,57 +94,6 @@ namespace TinyConfig
                     }
                 }
             }
-
-            //for (int lineIndex = 0; lineIndex < iniFile.Length; lineIndex++)
-            //{
-            //    var line = iniFile[lineIndex];
-            //    var sectionName = tryExtractSectionName();
-            //    if (sectionName == null)
-            //    {
-            //        linesInCurrentSection++;
-            //    }
-            //    var isLastIteration = lineIndex == iniFile.Length - 1;
-            //    if (sectionName != null || isLastIteration)
-            //    {
-            //        if (readSections.NotContains(currentSectionName))
-            //        {
-            //            if (isLastIteration)
-            //            {
-            //                lineIndex++;
-            //            }
-            //            var bodyLocation = new IntInterval(lineIndex - linesInCurrentSection, lineIndex);
-            //            var body = iniFile.Skip(bodyLocation.From).Take(bodyLocation.Len);
-            //            yield return new Section(currentSectionName, body, bodyLocation);
-            //            readSections.Add(currentSectionName);
-            //        }
-            //        if (isLastIteration && sectionName != null && readSections.NotContains(sectionName))
-            //        {
-            //            yield return new Section(sectionName, new string[0], IntInterval.Zero);
-            //        }
-            //        linesInCurrentSection = 0;
-            //        currentSectionName = sectionName;
-            //    }
-
-            //    /////////////////////////////////
-
-            //    string tryExtractSectionName()
-            //    {
-            //        var containsSection = line
-            //            .SkipWhile(char.IsWhiteSpace).Aggregate()
-            //            .StartsWith(Constants.SECTION_HEADER_OPEN_MARK);
-            //        var name = line
-            //            .Between(Constants.SECTION_HEADER_OPEN_MARK, Constants.SECTION_HEADER_CLOSE_MARK, false, false);
-
-            //        return containsSection && isNameValid()
-            //            ? name
-            //            : null;
-
-            //        bool isNameValid()
-            //        {
-            //            return name.All(char.IsLetterOrDigit);
-            //        }
-            //    }
-            //}
         }
     }
 
@@ -164,7 +113,7 @@ namespace TinyConfig
 
             /////////////////////////////////
         
-            IEnumerable<ConfigKVP> exctractFromSection(SectionsFinder.Section section)
+            IEnumerable<ConfigKVP> exctractFromSection(SectionsFinder.SectionInfo section)
             {
                 var lineEnumerator = section.Body.GetEnumerator();
                 while (lineEnumerator.MoveNext())
@@ -189,7 +138,7 @@ namespace TinyConfig
                                   ? extractSinglelineKVP(key, line)
                                   : extractMultilineKVP(key, lineEnumerator);
 
-                        return new ConfigKVP(section.Name, kvp.Key, kvp.Value, kvp.Commentary);
+                        return new ConfigKVP(section.Section, kvp.Key, kvp.Value, kvp.Commentary);
 
                         //////////////////////////////////
 

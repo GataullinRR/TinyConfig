@@ -9,5 +9,6 @@
 
         public const string SECTION_HEADER_OPEN_MARK = "[";
         public const string SECTION_HEADER_CLOSE_MARK = "]";
+        public const string SUBSECTION_SEPARATOR = ".";
     }
 }

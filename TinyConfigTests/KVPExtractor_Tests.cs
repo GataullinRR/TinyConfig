@@ -140,10 +140,10 @@ SomeVal2 =2
             var actual = KVPExtractor.ExtractAll(new StreamReader(new MemoryStream(data.GetBytes(Encoding.UTF8))));
             var expected = new[]
             {
-                new ConfigKVP(null, "SomeUInt8", new ConfigValue("3", false), null),
-                new ConfigKVP("Section2", "SomeString", new ConfigValue("Hello", true), null),
-                new ConfigKVP("Section4", "SomeVal1", new ConfigValue("1", false), null),
-                new ConfigKVP("Section4", "SomeVal2", new ConfigValue("2", false), null),
+                new ConfigKVP(new Section(null), "SomeUInt8", new ConfigValue("3", false), null),
+                new ConfigKVP(new Section("Section2"), "SomeString", new ConfigValue("Hello", true), null),
+                new ConfigKVP(new Section("Section4"), "SomeVal1", new ConfigValue("1", false), null),
+                new ConfigKVP(new Section("Section4"), "SomeVal2", new ConfigValue("2", false), null),
             };
 
             Assert.AreEqual(expected, actual);
@@ -164,10 +164,10 @@ SomeVal2 =2";
             var actual = KVPExtractor.ExtractAll(new StreamReader(new MemoryStream(data.GetBytes(Encoding.UTF8))));
             var expected = new[]
             {
-                new ConfigKVP("Section1", "SomeUInt8", new ConfigValue("3", false), null),
-                new ConfigKVP("Section1", "SomeInt32Arr", new ConfigValue("1 2 3", false), "It is int[]"),
-                new ConfigKVP("Section2", "SomeVal1", new ConfigValue("1", false), null),
-                new ConfigKVP("Section2", "SomeVal2", new ConfigValue("2", false), null),
+                new ConfigKVP(new Section("Section1"), "SomeUInt8", new ConfigValue("3", false), null),
+                new ConfigKVP(new Section("Section1"), "SomeInt32Arr", new ConfigValue("1 2 3", false), "It is int[]"),
+                new ConfigKVP(new Section("Section2"), "SomeVal1", new ConfigValue("1", false), null),
+                new ConfigKVP(new Section("Section2"), "SomeVal2", new ConfigValue("2", false), null),
             };
 
             Assert.AreEqual(expected, actual);

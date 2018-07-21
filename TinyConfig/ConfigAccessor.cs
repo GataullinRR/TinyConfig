@@ -19,17 +19,18 @@ namespace TinyConfig
     {
         readonly Stream _file;
         readonly Encoding _encoding;
+        readonly string _rootSection;
 
         public EnhancedObservableCollection<ConfigKVP> KVPs { get; }
 
-        public ConfigReaderWriter(Stream file, Encoding encoding, string section)
+        public ConfigReaderWriter(Stream file, Encoding encoding, string rootSection)
         {
             _file = file;
             _encoding = encoding;
+            _rootSection = rootSection;
 
             KVPs = new EnhancedObservableCollection<ConfigKVP>(
-                KVPExtractor.ExtractAll(new StreamReader(_file, _encoding))
-                .Where(kvp => kvp.Section == section));
+                KVPExtractor.ExtractAll(new StreamReader(_file, _encoding)));
             KVPs.CollectionChanged += Config_CollectionChanged;
             if (!file.CanWrite)
             {
@@ -41,17 +42,23 @@ namespace TinyConfig
         {
             var sections = from kvp in KVPs
                            group kvp by kvp.Section into g
-                           orderby g.Key
-                           select new { SectionName = g.Key, Body = g.ToArray() };
+                           orderby g.Key.Order
+                           orderby g.Key.FullName
+                           select new { Section = g.Key, Body = g.ToArray() };
 
             _file.SetLength(0);
             var writer = new StreamWriter(_file, _encoding);
             foreach (var group in sections)
             {
-                if (group.SectionName != null)
+                if (group.Section.FullName != _rootSection 
+                    && group.Section.IsInsideSection(_rootSection))
                 {
-                    writer.WriteLine(
-                        Constants.SECTION_HEADER_OPEN_MARK + group.SectionName + Constants.SECTION_HEADER_CLOSE_MARK);
+                    throw new InvalidOperationException();
+                }
+
+                if (group.Section != null && !group.Section.IsRoot)
+                {
+                    writer.WriteLine(group.Section.ToString());
                 }
                 foreach (var kvp in group.Body)
                 {
