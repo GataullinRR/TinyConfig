@@ -9,8 +9,17 @@ namespace TinyConfig
             return d.Value;
         }
 
+        public static bool operator ==(ConfigProxy<T> l, ConfigProxy<T> r)
+        {
+            return ReferenceEquals(l, r);
+        }
+        public static bool operator !=(ConfigProxy<T> l, ConfigProxy<T> r)
+        {
+            return !(l == r);
+        }
+
         readonly Action<T> _valueUpdater;
-        readonly Func<string, string> _commentaryUpdater;
+        readonly Action<string> _commentaryUpdater;
         string _Commentary;
         T _Value;
 
@@ -23,10 +32,10 @@ namespace TinyConfig
         public string Commentary
         {
             get => _Commentary;
-            set => _Commentary = _commentaryUpdater(value);
+            set => _commentaryUpdater(_Commentary = value);
         }
 
-        internal ConfigProxy(T value, string commentary, Action<T> valueUpdater, Func<string, string> commentaryUpdater)
+        internal ConfigProxy(T value, string commentary, Action<T> valueUpdater, Action<string> commentaryUpdater)
         {
             _Value = value;
             _Commentary = commentary;

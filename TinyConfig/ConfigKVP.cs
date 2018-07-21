@@ -4,12 +4,21 @@ namespace TinyConfig
 {
     internal class ConfigKVP : IEquatable<ConfigKVP>
     {
+        public string Section { get; }
         public string Key { get; }
         public ConfigValue Value { get; }
         public string Commentary { get; }
 
         public ConfigKVP(string key, ConfigValue value, string commentary)
         {
+            Key = key;
+            Value = value;
+            Commentary = commentary;
+        }
+
+        public ConfigKVP(string section, string key, ConfigValue value, string commentary)
+        {
+            Section = section;
             Key = key;
             Value = value;
             Commentary = commentary;
@@ -47,8 +56,10 @@ namespace TinyConfig
 
         public bool Equals(ConfigKVP other)
         {
-            return Key == other.Key && 
-                   Value.Equals(other.Value);
+            return Section == other.Section
+                && Key == other.Key
+                && Value.Equals(other.Value)
+                && Commentary == other.Commentary;
         }
     }
 }

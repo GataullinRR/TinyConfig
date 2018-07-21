@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("TinyConfig")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("GataullinRR")]
 [assembly: AssemblyProduct("TinyConfig")]
 [assembly: AssemblyCopyright("Copyright ©  2018")]
 [assembly: AssemblyTrademark("")]
@@ -33,6 +33,6 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("2018.6.9")]
-[assembly: AssemblyVersion("0.1.0.119")]
-[assembly: AssemblyFileVersion("0.1.0.119")]
+[assembly: AssemblyVersion("0.2.0.222")]
+[assembly: AssemblyFileVersion("0.2.0.222")]
 [assembly: InternalsVisibleTo("TinyConfigTests")]

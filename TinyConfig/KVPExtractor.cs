@@ -1,103 +1,281 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using Utilities;
 using Utilities.Extensions;
+using Utilities.Types;
+using Vectors;
 
 namespace TinyConfig
 {
-    internal static class KVPExtractor
+    static class SectionsFinder
     {
-        public static IEnumerable<ConfigKVP> ExtractAll(StreamReader reader)
+        public class Section
         {
-            var lineEnumerator = reader.ReadAllLines().GetEnumerator();
+            public string Name { get; }
+            public IEnumerable<string> FullSection { get; }
+            public IEnumerable<string> Body { get; }
+            public IntInterval SectionLocation { get; }
+            public IntInterval SectionBodyLocation { get; }
+
+            public Section
+                (string name, IEnumerable<string> section, IEnumerable<string> body, IntInterval sectionLocation, IntInterval sectionBodyLocation)
+            {
+                Name = name;
+                FullSection = section;
+                Body = body;
+                SectionLocation = sectionLocation;
+                SectionBodyLocation = sectionBodyLocation;
+            }
+
+            public override string ToString()
+            {
+                return new { Name, SectionLocation, SectionBodyLocation, Body = Body.AsMultilineString() }.ToString();
+            }
+        }
+
+        public static IEnumerable<Section> GetSections(IEnumerable<string> iniFile)
+        {
+            var readSections = new List<string>();
+            string currentSectionName = null;
+            var linesInCurrentSection = 0;
+            var lineEnumerator = new EnhancedEnumerator<string>(iniFile);
             while (lineEnumerator.MoveNext())
             {
                 var line = lineEnumerator.Current;
-                var key = line
-                          .Split(Constants.KVP_SEPERATOR)[0]
-                          .SkipFromEndWhile(c => !char.IsLetterOrDigit(c))
-                          .Aggregate();
-                if (isOneLineKVP())
+                var sectionName = tryExtractSectionName();
+                if (sectionName == null)
                 {
-                    var valueStartIndex = line.IndexOf(Constants.KVP_SEPERATOR) + 1;
-                    var commentBlockStartIndex = line.IndexOf(Constants.COMMENT_SEPARATOR);
-                    var value = commentBlockStartIndex < 0 
-                                ? line.Substring(valueStartIndex)
-                                : line.Substring(valueStartIndex, commentBlockStartIndex - valueStartIndex);
-                    var comment = commentBlockStartIndex < 0
-                                ? null
-                                : line.Substring(commentBlockStartIndex + Constants.COMMENT_SEPARATOR.Length);
-
-                    yield return new ConfigKVP(key, new ConfigValue(value, false), comment);
+                    linesInCurrentSection++;
                 }
-                else
+                if (sectionName != null || lineEnumerator.IsLastElement)
                 {
-                    var value = line.Substring(line.IndexOf(Constants.BLOCK_MARK) + 1) + Global.NL;
-                    string commentary = null;
-                    StringBuilder valueAsStr = new StringBuilder();
-                    bool isBlockClosed = false;
-                    while (true)
+                    if (readSections.NotContains(currentSectionName))
                     {
-                        var valueBlockEnd = 0;
-                        for (int i = 1; i < value.Length; i++)
+                        var bodyLocation = new IntInterval(lineEnumerator.Index - linesInCurrentSection, lineEnumerator.Index);
+                        var sectionLoaction = bodyLocation.SetFrom(bodyLocation.From - 1);
+                        if (lineEnumerator.IsLastElement)
                         {
-                            var prev = value[i - 1];
-                            var curr = value[i];
-                            if (prev == Constants.BLOCK_MARK && curr == Constants.BLOCK_MARK)
-                            {
-                                i++;
-                                valueAsStr.Append(Constants.BLOCK_MARK);
-                                continue;
-                            }
-                            else if (prev == Constants.BLOCK_MARK && curr != Constants.BLOCK_MARK)
-                            {
-                                isBlockClosed = true;
-                                valueBlockEnd = i - 1;
-                                break;
-                            }
-                            else
-                            {
-                                valueAsStr.Append(prev);
-                                if (!isBlockClosed && i == value.Length - 1)
-                                {
-                                    valueAsStr.Append(curr);
-                                }
-                            }
+                            sectionLoaction += 1;
+                            bodyLocation += 1;
                         }
-
-
-                        if (isBlockClosed)
-                        {
-                            var commentBlockStart = line
-                                .FindAll(Constants.COMMENT_SEPARATOR)
-                                .Where(i => i > valueBlockEnd)
-                                .FirstOrDefault(-1);
-                            if (commentBlockStart >= 0)
-                            {
-                                commentary = line.Substring(commentBlockStart + Constants.COMMENT_SEPARATOR.Length);
-                            }
-                            break;
-                        }
-                        else if (lineEnumerator.MoveNext())
-                        {
-                            value = lineEnumerator.Current + Global.NL;
-                        }
-                        else // Не удалось найти закрывающую скобку, а стрим уже закончился
-                        {
-                            break;
-                        }
+                        var body = iniFile.Skip(bodyLocation.From).Take(bodyLocation.Len);
+                        var section = iniFile.Skip(sectionLoaction.From).Take(sectionLoaction.Len);
+                        yield return new Section(currentSectionName, section, body, sectionLoaction, bodyLocation);
+                        readSections.Add(currentSectionName);
                     }
-
-                    yield return new ConfigKVP(key, new ConfigValue(valueAsStr.ToString(), true), commentary);
+                    if (lineEnumerator.IsLastElement && sectionName != null && readSections.NotContains(sectionName))
+                    {
+                        yield return new Section(sectionName, new string[0], new string[0], IntInterval.Zero, IntInterval.Zero);
+                    }
+                    linesInCurrentSection = 0;
+                    currentSectionName = sectionName;
                 }
 
-                bool isOneLineKVP()
+                /////////////////////////////////
+
+                string tryExtractSectionName()
                 {
-                    return !line.Contains(Constants.MULTILUNE_VALUE_MARK) || !line.Contains(Constants.BLOCK_MARK);
+                    var containsSection = line
+                        .SkipWhile(char.IsWhiteSpace).Aggregate()
+                        .StartsWith(Constants.SECTION_HEADER_OPEN_MARK);
+                    var name = line
+                        .Between(Constants.SECTION_HEADER_OPEN_MARK, Constants.SECTION_HEADER_CLOSE_MARK, false, false);
+
+                    return containsSection && isNameValid()
+                        ? name
+                        : null;
+
+                    bool isNameValid()
+                    {
+                        return name.All(char.IsLetterOrDigit);
+                    }
                 }
             }
+
+            //for (int lineIndex = 0; lineIndex < iniFile.Length; lineIndex++)
+            //{
+            //    var line = iniFile[lineIndex];
+            //    var sectionName = tryExtractSectionName();
+            //    if (sectionName == null)
+            //    {
+            //        linesInCurrentSection++;
+            //    }
+            //    var isLastIteration = lineIndex == iniFile.Length - 1;
+            //    if (sectionName != null || isLastIteration)
+            //    {
+            //        if (readSections.NotContains(currentSectionName))
+            //        {
+            //            if (isLastIteration)
+            //            {
+            //                lineIndex++;
+            //            }
+            //            var bodyLocation = new IntInterval(lineIndex - linesInCurrentSection, lineIndex);
+            //            var body = iniFile.Skip(bodyLocation.From).Take(bodyLocation.Len);
+            //            yield return new Section(currentSectionName, body, bodyLocation);
+            //            readSections.Add(currentSectionName);
+            //        }
+            //        if (isLastIteration && sectionName != null && readSections.NotContains(sectionName))
+            //        {
+            //            yield return new Section(sectionName, new string[0], IntInterval.Zero);
+            //        }
+            //        linesInCurrentSection = 0;
+            //        currentSectionName = sectionName;
+            //    }
+
+            //    /////////////////////////////////
+
+            //    string tryExtractSectionName()
+            //    {
+            //        var containsSection = line
+            //            .SkipWhile(char.IsWhiteSpace).Aggregate()
+            //            .StartsWith(Constants.SECTION_HEADER_OPEN_MARK);
+            //        var name = line
+            //            .Between(Constants.SECTION_HEADER_OPEN_MARK, Constants.SECTION_HEADER_CLOSE_MARK, false, false);
+
+            //        return containsSection && isNameValid()
+            //            ? name
+            //            : null;
+
+            //        bool isNameValid()
+            //        {
+            //            return name.All(char.IsLetterOrDigit);
+            //        }
+            //    }
+            //}
+        }
+    }
+
+    static class KVPExtractor
+    {
+
+        public static IEnumerable<ConfigKVP> ExtractAll(StreamReader reader)
+        {
+            var iniFile = reader.ReadAllLines().ToArray();
+            foreach (var section in SectionsFinder.GetSections(iniFile))
+            {
+                foreach (var kvp in exctractFromSection(section))
+                {
+                    yield return kvp;
+                }
+            }
+
+            /////////////////////////////////
+        
+            IEnumerable<ConfigKVP> exctractFromSection(SectionsFinder.Section section)
+            {
+                var lineEnumerator = section.Body.GetEnumerator();
+                while (lineEnumerator.MoveNext())
+                {
+                    var line = lineEnumerator.Current;
+                    var key = extractKey();
+                    yield return extractKVP();
+
+                    //////////////////////////////////
+
+                    string extractKey()
+                    {
+                        return line
+                               .Split(Constants.KVP_SEPERATOR)[0]
+                               .SkipFromEndWhile(c => !char.IsLetterOrDigit(c))
+                               .Aggregate();
+                    }
+
+                    ConfigKVP extractKVP()
+                    {
+                        var kvp = isOneLineKVP()
+                                  ? extractSinglelineKVP(key, line)
+                                  : extractMultilineKVP(key, lineEnumerator);
+
+                        return new ConfigKVP(section.Name, kvp.Key, kvp.Value, kvp.Commentary);
+
+                        //////////////////////////////////
+
+                        bool isOneLineKVP()
+                        {
+                            return !line.Contains(Constants.MULTILUNE_VALUE_MARK) || !line.Contains(Constants.BLOCK_MARK);
+                        }
+                    }
+                }
+            }
+        }
+
+        static ConfigKVP extractSinglelineKVP(string key, string line)
+        {
+            var valueStartIndex = line.IndexOf(Constants.KVP_SEPERATOR) + 1;
+            var commentBlockStartIndex = line.IndexOf(Constants.COMMENT_SEPARATOR);
+            var value = commentBlockStartIndex < 0
+                        ? line.Substring(valueStartIndex)
+                        : line.Substring(valueStartIndex, commentBlockStartIndex - valueStartIndex);
+            var comment = commentBlockStartIndex < 0
+                        ? null
+                        : line.Substring(commentBlockStartIndex + Constants.COMMENT_SEPARATOR.Length);
+
+            return new ConfigKVP(key, new ConfigValue(value, false), comment);
+        }
+
+        static ConfigKVP extractMultilineKVP(string key, IEnumerator<string> lineEnumerator)
+        {
+            var line = lineEnumerator.Current;
+            var value = line.Substring(line.IndexOf(Constants.BLOCK_MARK) + 1) + Global.NL;
+            string commentary = null;
+            StringBuilder valueAsStr = new StringBuilder();
+            bool isBlockClosed = false;
+            while (true)
+            {
+                var valueBlockEnd = 0;
+                for (int i = 1; i < value.Length; i++)
+                {
+                    var prev = value[i - 1];
+                    var curr = value[i];
+                    if (prev == Constants.BLOCK_MARK && curr == Constants.BLOCK_MARK)
+                    {
+                        i++;
+                        valueAsStr.Append(Constants.BLOCK_MARK);
+                        continue;
+                    }
+                    else if (prev == Constants.BLOCK_MARK && curr != Constants.BLOCK_MARK)
+                    {
+                        isBlockClosed = true;
+                        valueBlockEnd = i - 1;
+                        break;
+                    }
+                    else
+                    {
+                        valueAsStr.Append(prev);
+                        if (!isBlockClosed && i == value.Length - 1)
+                        {
+                            valueAsStr.Append(curr);
+                        }
+                    }
+                }
+
+
+                if (isBlockClosed)
+                {
+                    var commentBlockStart = line
+                        .FindAll(Constants.COMMENT_SEPARATOR)
+                        .Where(i => i > valueBlockEnd)
+                        .FirstOrDefault(-1);
+                    if (commentBlockStart >= 0)
+                    {
+                        commentary = line.Substring(commentBlockStart + Constants.COMMENT_SEPARATOR.Length);
+                    }
+                    break;
+                }
+                else if (lineEnumerator.MoveNext())
+                {
+                    value = lineEnumerator.Current + Global.NL;
+                }
+                else // Не удалось найти закрывающую скобку, а стрим уже закончился
+                {
+                    break;
+                }
+            }
+
+            return new ConfigKVP(key, new ConfigValue(valueAsStr.ToString(), true), commentary);
         }
     }
 }

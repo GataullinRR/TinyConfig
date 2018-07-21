@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MVVMUtilities.Types;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -14,42 +15,77 @@ using Utilities.Extensions;
 
 namespace TinyConfig
 {
-    class CachedConfig
+    class ConfigReaderWriter
     {
-        readonly FileStream _file;
+        readonly Stream _file;
         readonly Encoding _encoding;
-        
-        public ObservableCollection<ConfigKVP> KVPs { get; }
 
-        public CachedConfig(FileStream file, Encoding encoding)
+        public EnhancedObservableCollection<ConfigKVP> KVPs { get; }
+
+        public ConfigReaderWriter(Stream file, Encoding encoding, string section)
         {
             _file = file;
             _encoding = encoding;
 
-            KVPs = KVPExtractor.ExtractAll(new StreamReader(_file, _encoding)).ToObservable();
+            KVPs = new EnhancedObservableCollection<ConfigKVP>(
+                KVPExtractor.ExtractAll(new StreamReader(_file, _encoding))
+                .Where(kvp => kvp.Section == section));
             KVPs.CollectionChanged += Config_CollectionChanged;
+            if (!file.CanWrite)
+            {
+                KVPs.MakeReadOnly();
+            }
         }
 
         void Config_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
+            var sections = from kvp in KVPs
+                           group kvp by kvp.Section into g
+                           orderby g.Key
+                           select new { SectionName = g.Key, Body = g.ToArray() };
+
             _file.SetLength(0);
             var writer = new StreamWriter(_file, _encoding);
-            writer.WriteLines(KVPs.Select(kvp => kvp.ToString()));
+            foreach (var group in sections)
+            {
+                if (group.SectionName != null)
+                {
+                    writer.WriteLine(
+                        Constants.SECTION_HEADER_OPEN_MARK + group.SectionName + Constants.SECTION_HEADER_CLOSE_MARK);
+                }
+                foreach (var kvp in group.Body)
+                {
+                    writer.WriteLine(kvp.ToString());
+                }
+            }
             writer.Flush();
             _file.Flush();
+        }
+
+        public void Close()
+        {
+            _file.Close();
+            KVPs.MakeReadOnly();
         }
 
         public override string ToString()
         {
             _file.Position = 0;
-            return new StreamReader(_file, _encoding).ReadAllLines()
-                .Aggregate((acc, line) => acc + Global.NL + line) + Global.NL;
+            if (_file.Length == 0)
+            {
+                return "" + Global.NL;
+            }
+            else
+            {
+                return new StreamReader(_file, _encoding).ReadAllLines()
+                    .Aggregate((acc, line) => acc + Global.NL + line) + Global.NL;
+            }
         }
     }
 
     public class ConfigAccessor
     {
-        readonly CachedConfig _config;
+        readonly ConfigReaderWriter _config;
         readonly HashSet<string> _proxyKeys = new HashSet<string>();
         readonly HashSet<TypeMarshaller> _marshallers = new HashSet<TypeMarshaller>()
         {
@@ -69,14 +105,26 @@ namespace TinyConfig
             new EnumMarshaller()
         };
 
-        internal ConfigAccessor(CachedConfig config)
+        internal ConfigAccessor(ConfigReaderWriter config)
         {
             _config = config;
         }
 
         public ConfigAccessor Clear()
         {
+            if (_config.KVPs.IsReadOnly)
+            {
+                throw new InvalidOperationException();
+            }
+
             _config.KVPs.Clear();
+
+            return this;
+        }
+
+        public ConfigAccessor Close()
+        {
+            _config.Close();
 
             return this;
         }
@@ -94,7 +142,7 @@ namespace TinyConfig
             if (_proxyKeys.Contains(key))
             {
                 // Только readonly доступ к уже используемому ConfigProxy
-                return new ConfigProxy<T>(fallbackValue, null, _ => { }, _ => null);
+                return new ConfigProxy<T>(fallbackValue, null, _ => { }, _ => { });
             }
             var valueType = typeof(T).IsArray ? typeof(T).GetElementType() : typeof(T);
 
@@ -131,18 +179,23 @@ namespace TinyConfig
             }
             if (!validKVPFound)
             {
-                appendKVP();
+                tryAppendKVP();
             }
 
             _proxyKeys.Add(key);
             ConfigProxy<T> proxy = null;
-            proxy = new ConfigProxy<T>(readValue, readCeommentary, updateValueInConfigFile, updateCommentaryInConfigFile);
+            proxy = new ConfigProxy<T>(readValue, readCeommentary, tryUpdateValueInConfigFile, tryUpdateCommentaryInConfigFile);
             return proxy;
 
-            void appendKVP()
+            ////////////////////////////////////////////////////
+
+            void tryAppendKVP()
             {
-                var kvp = pack(fallbackValue, null);
-                _config.KVPs.Add(kvp);
+                if (!_config.KVPs.IsReadOnly)
+                {
+                    var kvp = pack(fallbackValue, null);
+                    _config.KVPs.Add(kvp);
+                }
             }
             ConfigKVP pack(T value, string commentary)
             {
@@ -162,14 +215,19 @@ namespace TinyConfig
             {
                 return key?.All(c => char.IsLetterOrDigit(c) || c == '_') ?? false;
             }
-            void updateValueInConfigFile(T newValue)
+            void tryUpdateValueInConfigFile(T newValue)
             {
-                _config.KVPs[kvpIndex] = pack(newValue, null);
+                if (!_config.KVPs.IsReadOnly)
+                {
+                    _config.KVPs[kvpIndex] = pack(newValue, null);
+                }
             }
-            string updateCommentaryInConfigFile(string newValue)
+            void tryUpdateCommentaryInConfigFile(string newValue)
             {
-                _config.KVPs[kvpIndex] = pack(proxy.Value, newValue);
-                return _config.KVPs[kvpIndex].Commentary;
+                if (!_config.KVPs.IsReadOnly)
+                {
+                    _config.KVPs[kvpIndex] = pack(proxy.Value, newValue);
+                }
             }
             T cast(dynamic value)
             {
