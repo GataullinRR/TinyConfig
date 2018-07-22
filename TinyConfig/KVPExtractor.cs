@@ -90,7 +90,7 @@ namespace TinyConfig
 
                     bool isNameValid()
                     {
-                        return name.All(char.IsLetterOrDigit);
+                        return name.Replace(Constants.SUBSECTION_SEPARATOR, "").All(char.IsLetterOrDigit);
                     }
                 }
             }

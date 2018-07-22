@@ -150,6 +150,33 @@ SomeVal2 =2
         }
 
         [Test()]
+        public void ExtractAll_SectionInSectionTest()
+        {
+            var data = @"SomeUInt8 =3
+[Section1]
+SomeInt32Arr =1 2 3\\It is int[]
+[Section1.Sec2]
+SomeString =#'Hello'
+[Section1.Sec2.Sec3]
+[Section4]
+SomeVal1 =1
+SomeVal2 =2
+";
+
+            var actual = KVPExtractor.ExtractAll(new StreamReader(new MemoryStream(data.GetBytes(Encoding.UTF8))));
+            var expected = new[]
+            {
+                new ConfigKVP(new Section(null), "SomeUInt8", new ConfigValue("3", false), null),
+                new ConfigKVP(new Section("Section1"), "SomeInt32Arr", new ConfigValue("1 2 3", false), "It is int[]"),
+                new ConfigKVP(new Section("Section1.Sec2"), "SomeString", new ConfigValue("Hello", true), null),
+                new ConfigKVP(new Section("Section4"), "SomeVal1", new ConfigValue("1", false), null),
+                new ConfigKVP(new Section("Section4"), "SomeVal2", new ConfigValue("2", false), null),
+            };
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
         public void ExtractAll_IgnoreRepeatingSectionsTest()
         {
             var data = @"[Section1]
