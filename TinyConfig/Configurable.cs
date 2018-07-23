@@ -135,7 +135,7 @@ namespace TinyConfig
             {
                 _baseStream = baseStream;
 
-                var lines = new StreamReader(_baseStream).ReadAllLines();
+                var lines = new StreamReader(_baseStream).ReadAllLines().ToArray();
                 var sections = SectionsFinder.GetSections(lines);
                 _sections = sections.ToArray();
             }
@@ -143,7 +143,7 @@ namespace TinyConfig
             public Stream CreateStream(string sectionName)
             {
                 var sectionIndex = _sections.Find(s => s.Section.FullName == sectionName);
-                var section = sectionIndex > 0 ? _sections[sectionIndex] : null;
+                var section = sectionIndex >= 0 ? _sections[sectionIndex] : null;
 
                 if (_streams.Any(si => si.SectionName == sectionName))
                 {
@@ -172,6 +172,7 @@ namespace TinyConfig
                     var sw = new StreamWriter(ms);
                     sw.WriteLines(section.FullSection);
                     sw.Flush();
+                    ms.Position = 0;
 
                     return ms;
                 }
@@ -197,51 +198,80 @@ namespace TinyConfig
 
         readonly Stream _fileStorage;
         readonly StreamAggregator _streamAggregator;
-        bool _readWriteStreamCreated;
-        bool _anyStreamCreated;
+        readonly List<SectionAccessInfo> _sectionInfos = new List<SectionAccessInfo>();
+
+        class SectionAccessInfo
+        {
+            public Section Section { get; }
+            public bool ReadWriteStreamCreated { get; set; }
+            public bool AnyStreamCreated { get; set; }
+
+            public SectionAccessInfo(Section section, bool readWriteStreamCreated, bool anyStreamCreated)
+            {
+                Section = section ?? throw new ArgumentNullException(nameof(section));
+                ReadWriteStreamCreated = readWriteStreamCreated;
+                AnyStreamCreated = anyStreamCreated;
+            }
+        }
 
         public string FilePath { get; }
 
+        public ConfigStorageProxy(FileStream fileStorage)
+            : this((Stream)fileStorage)
+        {
+            FilePath = fileStorage.Name;
+        }
         public ConfigStorageProxy(Stream fileStorage)
         {
             _fileStorage = fileStorage;
             _streamAggregator = new StreamAggregator(_fileStorage);
         }
-        public ConfigStorageProxy(FileStream fileStorage)
-        {
-            _fileStorage = fileStorage;
-            _streamAggregator = new StreamAggregator(_fileStorage);
-            FilePath = fileStorage.Name;
-        }
 
         public Stream GetNewStream(ConfigAccess access, string section)
         {
-            var stream = _streamAggregator.TryGetCreatedStream(section) ?? _streamAggregator.CreateStream(section);
+            var stream = _streamAggregator.TryGetCreatedStream(section) 
+                      ?? _streamAggregator.CreateStream(section);
+            {
+                var thisSectionInfo = _sectionInfos.SingleOrDefault(si => si.Section.FullName == section);
+                if (thisSectionInfo == null)
+                {
+                    _sectionInfos.Add(new SectionAccessInfo(new Section(section), false, false));
+                }
+            }
+            var sectionInfos = _sectionInfos.Where(si => si.Section.IsInsideSection(section));
+            var readWriteStreamCreated = sectionInfos.Any(si => si.ReadWriteStreamCreated);
+            var anyStreamCreated = sectionInfos.Any(si => si.AnyStreamCreated);
             switch (access)
             {
                 case ConfigAccess.READ_ONLY:
-                    if (_readWriteStreamCreated)
+                    if (readWriteStreamCreated)
                     {
                         throw new InvalidOperationException("Не разрешается создавать поток с доступом на чтение, если поток с доступом на четение/запись уже был создан.");
                     }
                     else
                     {
-                        _anyStreamCreated = true;
+                        foreach (var si in sectionInfos)
+                        {
+                            si.AnyStreamCreated = true;
+                        }
                         return new StreamProxy(stream, false);
                     }
                 case ConfigAccess.READ_WRITE:
-                    if (_readWriteStreamCreated)
+                    if (readWriteStreamCreated)
                     {
                         throw new InvalidOperationException("Поток с доступом на четение/запись уже был создан.");
                     }
-                    else if (_anyStreamCreated)
+                    else if (anyStreamCreated)
                     {
                         throw new InvalidOperationException("Не разрешается создавать поток с доступом на четение/запись, если поток с любым уровнем доступа уже был создан.");
                     }
                     else
                     {
-                        _readWriteStreamCreated = true;
-                        _anyStreamCreated = true;
+                        foreach (var si in sectionInfos)
+                        {
+                            si.ReadWriteStreamCreated = true;
+                            si.AnyStreamCreated = true;
+                        }
                         return new StreamProxy(stream, true);
                     }
                 default:

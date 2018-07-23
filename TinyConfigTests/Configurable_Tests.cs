@@ -85,6 +85,18 @@ namespace TinyConfig.Tests
         }
 
         [Test()]
+        public void OpenConfigFromStream_Test()
+        {
+            var configData = @"SomeInt32 =10
+SomeDouble =1.5" + Global.NL;
+            var stream = Encoding.UTF8.GetBytes(configData).ToMemoryStream();
+            var config = Configurable.CreateConfig(stream);
+
+            Assert.AreEqual(10, config.ReadValue(999, "SomeInt32").Value);
+            Assert.AreEqual(1.5, config.ReadValue(999D, "SomeDouble").Value);
+        }
+
+        [Test()]
         public void CreateConfigFromStream_Test()
         {
             var stream = File.Open(Path.GetTempFileName(), FileMode.Open);
@@ -97,6 +109,28 @@ namespace TinyConfig.Tests
 SomeDouble =1.3" + Global.NL;
 
             Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void CreateConfig_WithTwoAccesorsTest()
+        {
+            var configA = Configurable.CreateConfig("Test", "SomeDir", "SectionA").Clear();
+            var configB = Configurable.CreateConfig("Test", "SomeDir", "SectionB").Clear();
+
+            configA.ReadValue("A", "SomeString");
+            configB.ReadValue("B", "SomeString");
+
+            var actualA = configA.ToString();
+            var expectedA = @"[SectionA]
+SomeString =A" + Global.NL;
+
+            Assert.AreEqual(expectedA, actualA);
+
+            var actualB = configA.ToString();
+            var expectedB = @"[SectionB]
+SomeString =B" + Global.NL;
+
+            Assert.AreEqual(expectedB, actualB);
         }
 
         [Test()]

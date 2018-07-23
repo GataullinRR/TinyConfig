@@ -18,24 +18,30 @@ namespace TinyConfig
 
         public bool IsInsideSection(string sectionFullName)
         {
-            var isArgumentValid = sectionFullName != null
-                && sectionFullName.Length > 0
-                && !sectionFullName.StartsWith(Constants.SUBSECTION_SEPARATOR)
-                && !sectionFullName.EndsWith(Constants.SUBSECTION_SEPARATOR);
-            if (!isArgumentValid)
+            var passedInSection = new Section(sectionFullName);
+            if (!passedInSection.isValid())
             {
                 throw new ArgumentException();
             }
-
-            if (FullName == null)
+            
+            if (IsRoot)
             {
-                return false;
+                return true;
             }
             else
             {
-                return FullName.StartsWith(sectionFullName)
-                    && FullName.Remove(0, sectionFullName.Length).StartsWith(Constants.SUBSECTION_SEPARATOR);
+                return FullName.StartsWith(passedInSection.FullName);
+                    //&& FullName.Remove(0, sectionFullName.Length).StartsWith(Constants.SUBSECTION_SEPARATOR);
             }
+        }
+        bool isValid()
+        {
+            return IsRoot || 
+                    (
+                        FullName.Length > 0
+                        && !FullName.StartsWith(Constants.SUBSECTION_SEPARATOR)
+                        && !FullName.EndsWith(Constants.SUBSECTION_SEPARATOR)
+                    );
         }
 
         public bool Equals(Section other)

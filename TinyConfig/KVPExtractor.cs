@@ -36,7 +36,7 @@ namespace TinyConfig
             }
         }
 
-        public static IEnumerable<SectionInfo> GetSections(IEnumerable<string> iniFile)
+        public static IEnumerable<SectionInfo> GetSections(string[] iniFile)
         {
             var readSections = new List<string>();
             string currentSectionName = null;
@@ -55,7 +55,8 @@ namespace TinyConfig
                     if (readSections.NotContains(currentSectionName))
                     {
                         var bodyLocation = new IntInterval(lineEnumerator.Index - linesInCurrentSection, lineEnumerator.Index);
-                        var sectionLoaction = bodyLocation.SetFrom(bodyLocation.From - 1);
+                        var sectionLoaction = bodyLocation
+                            .SetFrom(sectionName == null ? bodyLocation.From : bodyLocation.From - 1);
                         if (lineEnumerator.IsLastElement)
                         {
                             sectionLoaction += 1;
