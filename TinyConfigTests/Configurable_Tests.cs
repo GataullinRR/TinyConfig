@@ -122,13 +122,13 @@ SomeDouble =1.3" + Global.NL;
 
             var actualA = configA.ToString();
             var expectedA = @"[SectionA]
-SomeString =A" + Global.NL;
+SomeString =#'A'" + Global.NL;
 
             Assert.AreEqual(expectedA, actualA);
 
-            var actualB = configA.ToString();
+            var actualB = configB.ToString();
             var expectedB = @"[SectionB]
-SomeString =B" + Global.NL;
+SomeString =#'B'" + Global.NL;
 
             Assert.AreEqual(expectedB, actualB);
         }

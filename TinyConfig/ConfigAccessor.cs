@@ -19,15 +19,15 @@ namespace TinyConfig
     {
         readonly Stream _file;
         readonly Encoding _encoding;
-        readonly string _rootSection;
 
+        public Section RootSection { get; }
         public EnhancedObservableCollection<ConfigKVP> KVPs { get; }
 
         public ConfigReaderWriter(Stream file, Encoding encoding, string rootSection)
         {
             _file = file;
             _encoding = encoding;
-            _rootSection = rootSection;
+            RootSection = new Section(rootSection);
 
             KVPs = new EnhancedObservableCollection<ConfigKVP>(
                 KVPExtractor.ExtractAll(new StreamReader(_file, _encoding)));
@@ -50,8 +50,8 @@ namespace TinyConfig
             var writer = new StreamWriter(_file, _encoding);
             foreach (var group in sections)
             {
-                if (group.Section.FullName != _rootSection 
-                    && group.Section.IsInsideSection(_rootSection))
+                if (group.Section.FullName != RootSection.FullName
+                    && group.Section.IsInsideSection(RootSection.FullName))
                 {
                     throw new InvalidOperationException();
                 }
@@ -211,7 +211,7 @@ namespace TinyConfig
                 if (isOk)
                 {
                     commentary = commentary?.Replace(Global.NL, "");
-                    return new ConfigKVP(key, packedValue, commentary);
+                    return new ConfigKVP(_config.RootSection, key, packedValue, commentary);
                 }
                 else
                 {

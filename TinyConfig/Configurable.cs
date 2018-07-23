@@ -196,10 +196,6 @@ namespace TinyConfig
             }
         }
 
-        readonly Stream _fileStorage;
-        readonly StreamAggregator _streamAggregator;
-        readonly List<SectionAccessInfo> _sectionInfos = new List<SectionAccessInfo>();
-
         class SectionAccessInfo
         {
             public Section Section { get; }
@@ -213,6 +209,10 @@ namespace TinyConfig
                 AnyStreamCreated = anyStreamCreated;
             }
         }
+
+        readonly Stream _fileStorage;
+        readonly StreamAggregator _streamAggregator;
+        readonly List<SectionAccessInfo> _sectionInfos = new List<SectionAccessInfo>();
 
         public string FilePath { get; }
 
