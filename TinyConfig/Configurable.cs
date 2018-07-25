@@ -193,6 +193,7 @@ namespace TinyConfig
                     _baseStream.Write(stream.Stream.ReadToEnd());
                     stream.Stream.Position = oldPosition;
                 }
+                _baseStream.Flush();
             }
         }
 
@@ -293,7 +294,7 @@ namespace TinyConfig
 
         static readonly HashSet<ConfigStorageProxy> _openedFiles = new HashSet<ConfigStorageProxy>();
 
-        public static string  BaseDirectory { get; }
+        public static string BaseDirectory { get; }
 
         static Configurable()
         {
@@ -355,7 +356,9 @@ namespace TinyConfig
             }
             var stream = config.GetNewStream(access, section);
 
-            return new ConfigAccessor(new ConfigReaderWriter(stream, encoding, section));
+            return new ConfigAccessor(
+                new ConfigReaderWriter(stream, encoding, section), 
+                new ConfigSourceInfo(true, configPath));
         }
 
         public static ConfigAccessor CreateConfig(Stream configStream)
@@ -369,7 +372,9 @@ namespace TinyConfig
 
             var stream = config.GetNewStream(DEFAULT_CONFIG_ACCESS, section);
 
-            return new ConfigAccessor(new ConfigReaderWriter(stream, encoding, section));
+            return new ConfigAccessor(
+                new ConfigReaderWriter(stream, encoding, section),
+                new ConfigSourceInfo(false, null));
         }
     }
 }

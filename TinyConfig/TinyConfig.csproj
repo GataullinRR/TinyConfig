@@ -58,6 +58,7 @@
     <Compile Include="ConfigAccessor.cs" />
     <Compile Include="ConfigKVP.cs" />
     <Compile Include="ConfigProxy.cs" />
+    <Compile Include="DTOs\ConfigSourceInfo.cs" />
     <Compile Include="Configurable.cs" />
     <Compile Include="ConfigValue.cs" />
     <Compile Include="Constants.cs" />

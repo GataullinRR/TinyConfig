@@ -112,9 +112,12 @@ namespace TinyConfig
             new EnumMarshaller()
         };
 
-        internal ConfigAccessor(ConfigReaderWriter config)
+        public ConfigSourceInfo SourceInfo { get; }
+
+        internal ConfigAccessor(ConfigReaderWriter config, ConfigSourceInfo configSourceInfo)
         {
             _config = config;
+            SourceInfo = configSourceInfo;
         }
 
         public ConfigAccessor Clear()
