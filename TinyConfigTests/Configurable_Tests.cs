@@ -114,8 +114,8 @@ SomeDouble =1.3" + Global.NL;
         [Test()]
         public void CreateConfig_WithTwoAccesorsTest()
         {
-            var configA = Configurable.CreateConfig("Test", "SomeDir", "SectionA").Clear();
-            var configB = Configurable.CreateConfig("Test", "SomeDir", "SectionB").Clear();
+            var configA = Configurable.CreateConfig("CreateConfig_WithTwoAccesorsTest", "SomeDir", "SectionA").Clear();
+            var configB = Configurable.CreateConfig("CreateConfig_WithTwoAccesorsTest", "SomeDir", "SectionB").Clear();
 
             configA.ReadValue("A", "SomeString");
             configB.ReadValue("B", "SomeString");
@@ -210,6 +210,29 @@ SomeEmptyDoubleArr =" + Global.NL;
             config.ReadValue(3, "SomeByte");
 
             accessor.Value = $"Hello {Global.Random.NextENWord()}";
+        }
+
+        [Test()]
+        public void CreateAndModify_FlushTest()
+        {
+            var config = Configurable.CreateConfig("CreateAndModify_FlushTest").Clear();
+            var initial = new FileInfo(config.SourceInfo.FilePath).Length;
+
+            config.ReadValue(10, "SomeInt32");
+            var afterRead1 = new FileInfo(config.SourceInfo.FilePath).Length;
+
+            var accessor = config.ReadValue("Hello ", "SomeString");
+            var afterRead2 = new FileInfo(config.SourceInfo.FilePath).Length;
+
+            accessor.Value = "------------------------------------";
+            var afterModify = new FileInfo(config.SourceInfo.FilePath).Length;
+
+            Assert.AreEqual(Encoding.UTF8.GetPreamble().Length, initial);
+            Assert.AreNotEqual(initial, afterRead1);
+            Assert.AreNotEqual(initial, afterRead2);
+            Assert.True(afterRead2 > afterRead1);
+            Assert.AreNotEqual(initial, afterModify);
+            Assert.True(afterModify > afterRead2);
         }
 
         [Test()]
