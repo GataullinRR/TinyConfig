@@ -43,7 +43,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryMarshaller.cs" />
-    <Compile Include="MemoryStreamMarshaller.cs" />
     <Compile Include="IPEndPointMarshaller.cs" />
     <Compile Include="IPAddressMarshaller.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

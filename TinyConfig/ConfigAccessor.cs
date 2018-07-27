@@ -108,6 +108,7 @@ namespace TinyConfig
             new SingleMarshaller(),
             new DoubleMarshaller(),
             new StringMarshaller(),
+            new MemoryStreamMarshaller(),
 
             new EnumMarshaller()
         };

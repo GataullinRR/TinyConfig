@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 using TinyConfig;
 using Utilities.Extensions;
 
-namespace SpecificMarshallers
+namespace TinyConfig.Marshallers
 {
-    public class MemoryStreamMarshaller : ExactTypeMarshaller<MemoryStream>
+    class MemoryStreamMarshaller : ExactTypeMarshaller<MemoryStream>
     {
         public MemoryStreamMarshaller()
             : base(false, " ") { }

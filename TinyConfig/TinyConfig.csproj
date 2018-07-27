@@ -74,6 +74,7 @@
     <Compile Include="Marshallers\Int16Marshaller.cs" />
     <Compile Include="Marshallers\Int32Marshaller.cs" />
     <Compile Include="Marshallers\Int64Marshaller.cs" />
+    <Compile Include="Marshallers\MemoryStreamMarshaller.cs" />
     <Compile Include="Marshallers\SByteMarshaller.cs" />
     <Compile Include="Marshallers\SingleMarshaller.cs" />
     <Compile Include="Marshallers\StringMarshaller.cs" />
