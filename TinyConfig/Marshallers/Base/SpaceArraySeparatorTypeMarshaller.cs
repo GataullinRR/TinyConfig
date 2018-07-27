@@ -2,7 +2,7 @@
 
 namespace TinyConfig
 {
-    abstract class SpaceArraySeparatorTypeMarshaller : TypeMarshaller
+    public abstract class SpaceArraySeparatorTypeMarshaller : TypeMarshaller
     {
         public SpaceArraySeparatorTypeMarshaller(Func<Type, bool> isTypeSupportedTester)
             : base(isTypeSupportedTester, false, " ")
@@ -18,7 +18,7 @@ namespace TinyConfig
         }
     }
 
-    abstract class SpaceArraySeparatorTypeMarshaller<T> : ExactTypeMarshaller<T>
+    public abstract class SpaceArraySeparatorTypeMarshaller<T> : ExactTypeMarshaller<T>
     {
         public SpaceArraySeparatorTypeMarshaller()
             : base(false, " ")

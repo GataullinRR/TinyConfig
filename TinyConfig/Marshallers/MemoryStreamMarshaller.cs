@@ -10,7 +10,7 @@ using Utilities.Extensions;
 
 namespace TinyConfig.Marshallers
 {
-    class MemoryStreamMarshaller : ExactTypeMarshaller<MemoryStream>
+    public class MemoryStreamMarshaller : ExactTypeMarshaller<MemoryStream>
     {
         public MemoryStreamMarshaller()
             : base(false, " ") { }

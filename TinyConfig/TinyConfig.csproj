@@ -58,11 +58,12 @@
     <Compile Include="ConfigAccessor.cs" />
     <Compile Include="ConfigKVP.cs" />
     <Compile Include="ConfigProxy.cs" />
+    <Compile Include="ConfigReaderWriter.cs" />
+    <Compile Include="ConfigStorageProxy.cs" />
     <Compile Include="DTOs\ConfigSourceInfo.cs" />
     <Compile Include="Configurable.cs" />
     <Compile Include="ConfigValue.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="DisposingIgnoreStream.cs" />
     <Compile Include="KVPExtractor.cs" />
     <Compile Include="Marshallers\Base\ArrayPackingNotSupportedException.cs" />
     <Compile Include="Marshallers\Base\ExactTypeMarshaller.cs" />
@@ -83,6 +84,8 @@
     <Compile Include="Marshallers\UInt64Marshaller.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Marshallers\Base\TypeMarshaller.cs" />
+    <Compile Include="Section.cs" />
+    <Compile Include="SectionsFinder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -2,7 +2,7 @@
 
 namespace TinyConfig
 {
-    public class ConfigValue : IEquatable<ConfigValue>
+    class ConfigValue : IEquatable<ConfigValue>
     {
         public string Value { get; }
         public bool IsMultiline { get; }
