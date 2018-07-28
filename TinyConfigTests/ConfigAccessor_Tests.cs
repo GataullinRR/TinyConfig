@@ -48,7 +48,7 @@ namespace TinyConfig.Tests
         [Test()]
         public void AddMarshaller_Test()
         {
-            var config = Configurable.CreateConfig("AddMarshaller").AddMarshaller<VectorMarshaller>();
+            var config = Configurable.CreateConfig("AddMarshaller").Clear().AddMarshaller<VectorMarshaller>();
             config.ReadValue(10, "SomeInt32");
             config.ReadValue(new V2(-9, 9), "SomeV2");
 

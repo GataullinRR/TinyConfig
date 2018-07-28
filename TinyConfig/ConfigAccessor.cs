@@ -69,23 +69,29 @@ namespace TinyConfig
             return this;
         }
 
-        public ConfigProxy<T> ReadValue<T>(T fallbackValue, [CallerMemberName]string key = "")
+        public ConfigProxy<T> ReadValueFrom<T>(T fallbackValue, string subsection, [CallerMemberName]string key = "")
+        {
+            return null;
+        }
+            public ConfigProxy<T> ReadValue<T>(T fallbackValue, [CallerMemberName]string key = "")
         {
             if (_proxyKeys.Contains(key))
             {
                 // Только readonly доступ к уже используемому ConfigProxy
                 return new ConfigProxy<T>(fallbackValue, null, _ => { }, _ => { });
             }
-            var valueType = typeof(T).IsArray ? typeof(T).GetElementType() : typeof(T);
 
+            var valueType = typeof(T).IsArray 
+                ? typeof(T).GetElementType() 
+                : typeof(T);
             var marshaller = _marshallers
-                                .OrderBy(m => typeof(ExactTypeMarshaller).IsAssignableFrom(m.GetType()))
-                                .FirstOrDefault(m => m.IsTypeSupported(valueType));
+                .OrderBy(m => typeof(ExactTypeMarshaller).IsAssignableFrom(m.GetType()))
+                .FirstOrDefault(m => m.IsTypeSupported(valueType));
             if (marshaller == null)
             {
                 throw new NotSupportedException();
             }
-            else if (!isNameCorrect())
+            else if (!isKeyCorrect())
             {
                 throw new ArgumentException();
             }
@@ -143,10 +149,14 @@ namespace TinyConfig
                     throw null;
                 }
             }
-            bool isNameCorrect()
+            bool isKeyCorrect()
             {
                 return key?.All(c => char.IsLetterOrDigit(c) || c == '_') ?? false;
             }
+            //bool isSubsectionCorrect()
+            //{
+            //    return new Section(subsection).
+            //}
             void tryUpdateValueInConfigFile(T newValue)
             {
                 if (!_config.KVPs.IsReadOnly)

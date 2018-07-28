@@ -150,6 +150,33 @@ SomeVal2 =2
         }
 
         [Test()]
+        public void ExtractAll_IncorrectSectionsTest()
+        {
+            var data = @"SomeVal1 =1
+[S ection]
+SomeVal2 =2
+[0Section]
+SomeVal3 =3
+[Sect-ion]
+SomeVal4 =4
+[Section]
+SomeVal5 =5
+";
+
+            var actual = KVPExtractor.ExtractAll(new StreamReader(new MemoryStream(data.GetBytes(Encoding.UTF8))));
+            var expected = new[]
+            {
+                new ConfigKVP(new Section(null), "SomeVal1", new ConfigValue("1", false), null),
+                new ConfigKVP(new Section(null), "SomeVal2", new ConfigValue("2", false), null),
+                new ConfigKVP(new Section("0Section"), "SomeVal3", new ConfigValue("3", false), null),
+                new ConfigKVP(new Section("0Section"), "SomeVal4", new ConfigValue("4", false), null),
+                new ConfigKVP(new Section("Section"), "SomeVal5", new ConfigValue("5", false), null),
+            };
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
         public void ExtractAll_SectionInSectionTest()
         {
             var data = @"SomeUInt8 =3

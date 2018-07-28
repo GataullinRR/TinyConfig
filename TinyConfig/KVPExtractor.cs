@@ -30,16 +30,31 @@ namespace TinyConfig
                 {
                     var line = lineEnumerator.Current;
                     var key = extractKey();
-                    yield return extractKVP();
+                    if (key != null)
+                    {
+                        yield return extractKVP();
+                    }
 
                     //////////////////////////////////
 
                     string extractKey()
                     {
-                        return line
+                        var canHaveKey = line.Contains(Constants.KVP_SEPERATOR);
+                        var supposedKey = canHaveKey
+                            ? line
                                .Split(Constants.KVP_SEPERATOR)[0]
-                               .SkipFromEndWhile(c => !char.IsLetterOrDigit(c))
-                               .Aggregate();
+                               .SkipWhile(c => char.IsWhiteSpace(c))
+                               .SkipFromEndWhile(c => char.IsWhiteSpace(c))
+                               .Aggregate()
+                            : null;
+                        var isKeyCorrect = canHaveKey 
+                            && supposedKey.IsNotEmpty() 
+                            && supposedKey.All(c => char.IsLetterOrDigit(c)) 
+                            && !char.IsDigit(supposedKey.First());
+
+                        return isKeyCorrect 
+                            ? supposedKey 
+                            : null;
                     }
 
                     ConfigKVP extractKVP()
