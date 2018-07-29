@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Utilities.Extensions;
 
 namespace TinyConfig
@@ -8,12 +9,30 @@ namespace TinyConfig
         public string FullName { get; }
         public int Order { get; }
         public bool IsRoot { get; }
+        public bool IsCorrect { get; }
 
+        public Section(Section root, string subsection)
+            :this(aggregate(root, subsection))
+        {
+
+        }
+        static string aggregate(Section root, string subsection)
+        {
+            var gap = root.IsRoot || subsection == null 
+                ? null 
+                : Constants.SUBSECTION_SEPARATOR;
+            var isRoot = root.IsRoot && subsection == null;
+            return isRoot ? null : root.FullName + gap + subsection;
+        }
         public Section(string fullName)
         {
             FullName = fullName;
             Order = FullName?.FindAll(Constants.SUBSECTION_SEPARATOR)?.Count ?? 0;
             IsRoot = FullName == null;
+            IsCorrect = FullName == null
+                || !FullName.EndsWith(Constants.SUBSECTION_SEPARATOR)
+                && !FullName.StartsWith(Constants.SUBSECTION_SEPARATOR)
+                && FullName.Remove(Constants.SUBSECTION_SEPARATOR).All(char.IsLetterOrDigit);
         }
 
         public bool IsInsideSection(string sectionFullName)
@@ -45,8 +64,7 @@ namespace TinyConfig
 
         public bool Equals(Section other)
         {
-            return FullName == other.FullName
-                && Order == other.Order;
+            return FullName == other.FullName;
         }
 
         public override string ToString()

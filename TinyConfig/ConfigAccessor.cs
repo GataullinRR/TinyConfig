@@ -69,11 +69,11 @@ namespace TinyConfig
             return this;
         }
 
-        public ConfigProxy<T> ReadValueFrom<T>(T fallbackValue, string subsection, [CallerMemberName]string key = "")
+        public ConfigProxy<T> ReadValue<T>(T fallbackValue, [CallerMemberName]string key = "")
         {
-            return null;
+            return ReadValueFrom(fallbackValue, null, key);
         }
-            public ConfigProxy<T> ReadValue<T>(T fallbackValue, [CallerMemberName]string key = "")
+        public ConfigProxy<T> ReadValueFrom<T>(T fallbackValue, string subsection, [CallerMemberName]string key = "")
         {
             if (_proxyKeys.Contains(key))
             {
@@ -81,32 +81,33 @@ namespace TinyConfig
                 return new ConfigProxy<T>(fallbackValue, null, _ => { }, _ => { });
             }
 
-            var valueType = typeof(T).IsArray 
-                ? typeof(T).GetElementType() 
+            var valueType = typeof(T).IsArray
+                ? typeof(T).GetElementType()
                 : typeof(T);
             var marshaller = _marshallers
                 .OrderBy(m => typeof(ExactTypeMarshaller).IsAssignableFrom(m.GetType()))
                 .FirstOrDefault(m => m.IsTypeSupported(valueType));
+            var section = new Section(_config.RootSection, subsection);
             if (marshaller == null)
             {
                 throw new NotSupportedException();
             }
-            else if (!isKeyCorrect())
+            else if (!isKeyCorrect() || !section.IsCorrect)
             {
                 throw new ArgumentException();
             }
 
             T readValue = fallbackValue;
-            string readCeommentary = null;
+            string readCommentary = null;
             var kvpIndex = 0;
             bool validKVPFound = false;
             foreach (var kvp in _config.KVPs)
             {
-                if (kvp.Key == key)
+                if (kvp.Key == key && kvp.Section.Equals(section))
                 {
                     var isParsed = marshaller.TryUnpack(kvp.Value, valueType, out dynamic parsedValue);
                     readValue = isParsed ? cast(parsedValue) : fallbackValue;
-                    readCeommentary = kvp.Commentary;
+                    readCommentary = kvp.Commentary;
                     validKVPFound = isParsed;
                     if (validKVPFound)
                     {
@@ -122,7 +123,7 @@ namespace TinyConfig
 
             _proxyKeys.Add(key);
             ConfigProxy<T> proxy = null;
-            proxy = new ConfigProxy<T>(readValue, readCeommentary, tryUpdateValueInConfigFile, tryUpdateCommentaryInConfigFile);
+            proxy = new ConfigProxy<T>(readValue, readCommentary, tryUpdateValueInConfigFile, tryUpdateCommentaryInConfigFile);
             return proxy;
 
             ////////////////////////////////////////////////////
@@ -153,10 +154,6 @@ namespace TinyConfig
             {
                 return key?.All(c => char.IsLetterOrDigit(c) || c == '_') ?? false;
             }
-            //bool isSubsectionCorrect()
-            //{
-            //    return new Section(subsection).
-            //}
             void tryUpdateValueInConfigFile(T newValue)
             {
                 if (!_config.KVPs.IsReadOnly)
