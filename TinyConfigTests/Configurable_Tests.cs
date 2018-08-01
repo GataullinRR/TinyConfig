@@ -85,6 +85,19 @@ namespace TinyConfig.Tests
         }
 
         [Test()]
+        public void OpenNotEmptyConfigAndRead_Test()
+        {
+            var config = Configurable.CreateConfig("OpenEmptyConfigAndRead_Test").Clear();
+            config.ReadValue("1", "Key1");
+            config.ReadValue("2", "Key2");
+            config.Close();
+
+            config = Configurable.CreateConfig("OpenEmptyConfigAndRead_Test");
+            Assert.AreEqual("1", config.ReadValue("", "Key1").Value);
+            Assert.AreEqual("2", config.ReadValue("", "Key2").Value);
+        }
+
+        [Test()]
         public void OpenConfigFromStream_Test()
         {
             var configData = @"SomeInt32 =10
@@ -94,6 +107,16 @@ SomeDouble =1.5" + Global.NL;
 
             Assert.AreEqual(10, config.ReadValue(999, "SomeInt32").Value);
             Assert.AreEqual(1.5, config.ReadValue(999D, "SomeDouble").Value);
+        }
+
+        [Test()]
+        public void ConfigClose_Test()
+        {
+            var config = Configurable.CreateConfig("ConfigClose_Test").Clear();
+            config.ReadValue("1", "Key1");
+            config.Close();
+
+            new FileStream(config.SourceInfo.FilePath, FileMode.Open);
         }
 
         [Test()]

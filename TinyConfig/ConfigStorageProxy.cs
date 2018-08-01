@@ -9,6 +9,9 @@ namespace TinyConfig
 {
     class ConfigStorageProxy
     {
+        /// <summary>
+        /// Обертка над потоком, которая может ограничивать доступ на запись
+        /// </summary>
         class StreamProxy : Stream
         {
             readonly Stream _stream;
@@ -73,6 +76,9 @@ namespace TinyConfig
             }
         }
 
+        /// <summary>
+        /// Разбивает один поток к конфигу на несколько независимых потоков к конкретным секциям этого конфига
+        /// </summary>
         class StreamAggregator
         {
             class NotifiableStream : StreamBase
@@ -83,6 +89,7 @@ namespace TinyConfig
                 }
 
                 public event EventHandler<StreamModifiedEventArgs> Modified = delegate { };
+                public event EventHandler<EventArgs> Closed = delegate { };
 
                 public NotifiableStream(Stream baseStream)
                     : base(baseStream)
@@ -101,6 +108,12 @@ namespace TinyConfig
                     base.SetLength(value);
                     Modified.Invoke(this, new StreamModifiedEventArgs());
                 }
+
+                public override void Close()
+                {
+                    base.Close();
+                    Closed.Invoke(this, EventArgs.Empty);
+                }
             }
 
             class StreamInfo
@@ -118,8 +131,9 @@ namespace TinyConfig
             }
 
             readonly Stream _baseStream;
+            bool _isBaseStreamClosed;
             readonly SectionsFinder.SectionInfo[] _sections;
-            readonly List<StreamInfo> _streams = new List<StreamInfo>();
+            readonly List<StreamInfo> _sectionStreams = new List<StreamInfo>();
 
             public StreamAggregator(Stream baseStream)
             {
@@ -135,7 +149,7 @@ namespace TinyConfig
                 var sectionIndex = _sections.Find(s => s.Section.FullName == sectionName);
                 var section = sectionIndex >= 0 ? _sections[sectionIndex] : null;
 
-                if (_streams.Any(si => si.SectionName == sectionName))
+                if (_sectionStreams.Any(si => si.SectionName == sectionName))
                 {
                     throw new InvalidOperationException();
                 }
@@ -144,15 +158,15 @@ namespace TinyConfig
                 if (section == null)
                 {
                     stream = new NotifiableStream(new MemoryStream());
-                    sectionIndex = Math.Max(_sections.Length - 1, _streams.EmptyToNull()?.Max(s => s.PositionInBase) ?? 0);
+                    sectionIndex = Math.Max(_sections.Length - 1, _sectionStreams.EmptyToNull()?.Max(s => s.PositionInBase) ?? 0);
                 }
                 else
                 {
                     stream = new NotifiableStream(readSection());
                 }
-                stream.Modified += updateBaseStream;
+                hookEvents(stream);
                 var streamInfo = new StreamInfo(sectionName, stream, sectionIndex);
-                _streams.Add(streamInfo);
+                _sectionStreams.Add(streamInfo);
 
                 return stream;
 
@@ -170,13 +184,40 @@ namespace TinyConfig
 
             public Stream TryGetCreatedStream(string sectionName)
             {
-                return _streams.FirstOrDefault(si => si.SectionName == sectionName)?.Stream;
+                return _sectionStreams.FirstOrDefault(si => si.SectionName == sectionName)?.Stream;
+            }
+
+            void closeBaseStream(object sender, EventArgs e)
+            {
+                var stream = (NotifiableStream)sender;
+                unhookEvents(stream);
+                if (_sectionStreams.Count == 1)
+                {
+                    _baseStream.Flush();
+                    _baseStream.Close();
+                    _isBaseStreamClosed = true;
+                }
+                else
+                {
+                    _sectionStreams.Remove(s => s.Stream == stream);
+                }
+            }
+
+            void hookEvents(NotifiableStream stream)
+            {
+                stream.Modified += updateBaseStream;
+                stream.Closed += closeBaseStream;
+            }
+            void unhookEvents(NotifiableStream stream)
+            {
+                stream.Modified -= updateBaseStream;
+                stream.Closed -= closeBaseStream;
             }
 
             void updateBaseStream(object sender, NotifiableStream.StreamModifiedEventArgs e)
             {
                 _baseStream.SetLength(0);
-                foreach (var stream in _streams.OrderBy(s => s.PositionInBase))
+                foreach (var stream in _sectionStreams.OrderBy(s => s.PositionInBase))
                 {
                     var oldPosition = stream.Stream.Position;
                     stream.Stream.Position = 0;
