@@ -20,7 +20,7 @@ namespace TinyConfig.Tests
             var config1 = Configurable.CreateConfig("OpenSameConfigAsReadOnly_ConcurrentAccessTest", "Access", ConfigAccess.READ_ONLY);
             var config2 = Configurable.CreateConfig("OpenSameConfigAsReadOnly_ConcurrentAccessTest", "Access", ConfigAccess.READ_ONLY);
             var accessor1 = config1.ReadValue(5, "SomeInt32");
-            var accessor2 = config1.ReadValue(15, "SomeInt32");
+            var accessor2 = config2.ReadValue(15, "SomeInt32");
 
             var actual1 = config1.ToString();
             var expected1 = @"" + Global.NL;
@@ -91,6 +91,7 @@ namespace TinyConfig.Tests
             config.ReadValue("1", "Key1");
             config.ReadValue("2", "Key2");
             config.Close();
+            Configurable.ReleaseFile(config.SourceInfo.FilePath);
 
             config = Configurable.CreateConfig("OpenEmptyConfigAndRead_Test");
             Assert.AreEqual("1", config.ReadValue("", "Key1").Value);
@@ -116,7 +117,53 @@ SomeDouble =1.5" + Global.NL;
             config.ReadValue("1", "Key1");
             config.Close();
 
-            new FileStream(config.SourceInfo.FilePath, FileMode.Open);
+            Assert.Throws<IOException>(() => new FileStream(config.SourceInfo.FilePath, FileMode.Open));
+            Configurable.ReleaseFile(config.SourceInfo.FilePath);
+            Assert.DoesNotThrow(() => new FileStream(config.SourceInfo.FilePath, FileMode.Open));
+        }
+
+        [Test()]
+        public void ReadValueAfterClose_Test()
+        {
+            var config = Configurable.CreateConfig("ReadValueAfterClose_Test").Clear();
+            var written = config.ReadValue("1", "Key1");
+            config.Close();
+            Configurable.ReleaseFile(config.SourceInfo.FilePath);
+
+            config = Configurable.CreateConfig("ReadValueAfterClose_Test");
+            config.Close();
+            var read = config.ReadValue("", "Key1");
+
+            Assert.AreEqual(written.Value, read.Value);
+        }
+
+        [Test()]
+        public void WriteValueAfterFileReleased_Test()
+        {
+            var config = Configurable.CreateConfig("ReadValueAfterFileReleased_Test").Clear();
+            Configurable.ReleaseFile(config.SourceInfo.FilePath);
+            Assert.Throws<ObjectDisposedException>(() => config.ReadValue("1", "Key1"));
+        }
+
+        [Test()]
+        public void WriteValueAfterClose_Test()
+        {
+            var config = Configurable.CreateConfig("WriteValueAfterClose_Test").Clear();
+            config.Close();
+            var value = config.ReadValue("1", "Key1");
+
+            Assert.AreEqual("1", value.Value);
+        }
+
+        [Test()]
+        public void WriteAndMoodifyValueAfterClose_Test()
+        {
+            var config = Configurable.CreateConfig("WriteAndMoodifyValueAfterClose_Test").Clear();
+            config.Close();
+            var value = config.ReadValue("1", "Key1");
+            value.Value = "2";
+
+            Assert.AreEqual("2", value.Value);
         }
 
         [Test()]
@@ -361,12 +408,7 @@ Enum =C\\it is single value" + Global.NL;
         {
             var config = Configurable.CreateConfig("CreateTwoFieldsWithSameName", "").Clear();
             config.ReadValue("ABC", "SomeValue");
-            config.ReadValue(123, "SomeValue");
-
-            var actual = config.ToString();
-            var expected = "SomeValue =#'ABC'" + Global.NL;
-
-            Assert.AreEqual(expected, actual);
+            Assert.Throws<InvalidOperationException>(() => config.ReadValue(123, "SomeValue"));
         }
     }
 }

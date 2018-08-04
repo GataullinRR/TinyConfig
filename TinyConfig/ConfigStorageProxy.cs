@@ -10,12 +10,12 @@ namespace TinyConfig
     /// <summary>
     /// Предоставляет потоки для взаимодействия с отдельными секциями файла с заданным уровнем доступа
     /// </summary>
-    class ConfigStorageProxy
+    class ConfigStorageProxy : Disposable
     {
         /// <summary>
         /// Разбивает один поток к конфигу на несколько независимых потоков к конкретным секциям этого конфига
         /// </summary>
-        class StreamAggregator
+        class StreamAggregator : Disposable
         {
             class NotifiableStream : StreamBase
             {
@@ -55,10 +55,10 @@ namespace TinyConfig
             class StreamInfo
             {
                 public string SectionName { get; }
-                public Stream Stream { get; }
+                public NotifiableStream Stream { get; }
                 public int PositionInBase { get; }
 
-                public StreamInfo(string sectionName, Stream stream, int positionInBase)
+                public StreamInfo(string sectionName, NotifiableStream stream, int positionInBase)
                 {
                     SectionName = sectionName;
                     Stream = stream;
@@ -82,6 +82,8 @@ namespace TinyConfig
 
             public Stream CreateStream(string sectionName)
             {
+                throwIfDisposed();
+
                 var sectionIndex = _sections.Find(s => s.Section.FullName == sectionName);
                 var section = sectionIndex >= 0 ? _sections[sectionIndex] : null;
 
@@ -120,6 +122,8 @@ namespace TinyConfig
 
             public Stream TryGetCreatedStream(string sectionName)
             {
+                throwIfDisposed();
+
                 return _sectionStreams.FirstOrDefault(si => si.SectionName == sectionName)?.Stream;
             }
 
@@ -161,6 +165,16 @@ namespace TinyConfig
                     stream.Stream.Position = oldPosition;
                 }
                 _baseStream.Flush();
+            }
+
+            protected override void disposeManagedState()
+            {
+                foreach (var stream in _sectionStreams)
+                {
+                    unhookEvents(stream.Stream);
+                    stream.Stream.Dispose();
+                }
+                _baseStream.Dispose();
             }
         }
 
@@ -236,7 +250,6 @@ namespace TinyConfig
             public Section Section { get; }
             public bool ReadWriteStreamCreated { get; set; }
             public bool AnyStreamCreated { get; set; }
-
 
             public SectionAccessInfo(Section section, bool readWriteStreamCreated, bool anyStreamCreated)
             {
@@ -315,9 +328,9 @@ namespace TinyConfig
             }
         }
 
-        void closeStream(object sender, EventArgs e)
+        protected override void disposeManagedState()
         {
-            throw new NotImplementedException();
+            _streamAggregator.Dispose();
         }
 
         public override int GetHashCode()

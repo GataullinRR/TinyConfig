@@ -77,8 +77,7 @@ namespace TinyConfig
         {
             if (_proxyKeys.Contains(key))
             {
-                // Только readonly доступ к уже используемому ConfigProxy
-                return new ConfigProxy<T>(fallbackValue, null, _ => { }, _ => { });
+                throw new InvalidOperationException("Значение с данным ключем уже было прочитано");
             }
 
             var valueType = typeof(T).IsArray

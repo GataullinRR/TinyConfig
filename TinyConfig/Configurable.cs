@@ -106,5 +106,20 @@ namespace TinyConfig
                 new ConfigReaderWriter(stream, encoding, section),
                 new ConfigSourceInfo(false, null));
         }
+
+        public static void ReleaseFile(string configFilePath)
+        {
+            if (configFilePath == null)
+            {
+                throw new ArgumentNullException();
+            }
+
+            var file = _openedFiles.SingleOrDefault(f => f.FilePath == configFilePath);
+            if (file != null)
+            {
+                file.Dispose();
+                _openedFiles.Remove(file);
+            }
+        }
     }
 }
