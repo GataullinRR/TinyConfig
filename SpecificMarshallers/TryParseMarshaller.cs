@@ -19,9 +19,16 @@ namespace SpecificMarshallers
         static TryParseMarshaller()
         {
             var type = typeof(T);
-            TRY_PARCE = (TryParseDelegate)type
-                .GetMethod("TryParse")
-                .CreateDelegate(typeof(TryParseDelegate));
+            try
+            {
+                TRY_PARCE = (TryParseDelegate)type
+                    .GetMethod("TryParse")
+                    .CreateDelegate(typeof(TryParseDelegate));
+            }
+            catch
+            {
+                throw new NotSupportedException($"Тип: {typeof(T).Name} не содержит в себе метода bool TryParse(string, out T)");
+            }
         }
 
         public override bool TryPack(T value, out string result)

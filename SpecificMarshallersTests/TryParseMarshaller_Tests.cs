@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using NUnit.Framework;
 using SpecificMarshallers;
 using System;
 using System.Collections.Generic;
@@ -11,12 +11,12 @@ using Utilities.Extensions;
 
 namespace SpecificMarshallers.Tests
 {
-    [TestClass()]
+    [TestFixture()]
     public class TryParseMarshaller_Tests
     {
         TryParseMarshaller<IPAddress> _marshaller = new TryParseMarshaller<IPAddress>();
 
-        [TestMethod()]
+        [Test()]
         public void TryPack_Test()
         {
             _marshaller.TryPack(IPAddress.Loopback, out string result);
@@ -24,12 +24,18 @@ namespace SpecificMarshallers.Tests
             Assert.AreEqual("127.0.0.1", result);
         }
 
-        [TestMethod()]
+        [Test()]
         public void TryUnpack_Test()
         {
             _marshaller.TryUnpack("127.0.0.1", out IPAddress address);
 
             Assert.AreEqual(IPAddress.Loopback, address);
+        }
+
+        [Test()]
+        public void CreateMarshallerForTypeWithoutTryParse_Test()
+        {
+            Assert.Throws<TypeInitializationException>(() => new TryParseMarshaller<object>());
         }
     }
 }
