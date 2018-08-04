@@ -22,6 +22,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MVVMUtilities", "..\General
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpecificMarshallers", "SpecificMarshallers\SpecificMarshallers.csproj", "{C81897D7-C103-4191-8D89-ACFEE3ADCF2D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpecificMarshallersTests", "SpecificMarshallersTests\SpecificMarshallersTests.csproj", "{F285D306-A89D-43AF-B3CC-B2CC134B3DC3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +58,10 @@ Global
 		{C81897D7-C103-4191-8D89-ACFEE3ADCF2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C81897D7-C103-4191-8D89-ACFEE3ADCF2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C81897D7-C103-4191-8D89-ACFEE3ADCF2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F285D306-A89D-43AF-B3CC-B2CC134B3DC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F285D306-A89D-43AF-B3CC-B2CC134B3DC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F285D306-A89D-43AF-B3CC-B2CC134B3DC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F285D306-A89D-43AF-B3CC-B2CC134B3DC3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

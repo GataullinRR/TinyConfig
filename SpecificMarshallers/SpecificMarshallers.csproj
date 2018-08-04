@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="TryParseMarshaller.cs" />
     <Compile Include="BinaryMarshaller.cs" />
     <Compile Include="IPEndPointMarshaller.cs" />
     <Compile Include="IPAddressMarshaller.cs" />
