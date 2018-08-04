@@ -7,75 +7,11 @@ using Utilities.Types;
 
 namespace TinyConfig
 {
+    /// <summary>
+    /// Предоставляет потоки для взаимодействия с отдельными секциями файла с заданным уровнем доступа
+    /// </summary>
     class ConfigStorageProxy
     {
-        /// <summary>
-        /// Обертка над потоком, которая может ограничивать доступ на запись
-        /// </summary>
-        class StreamProxy : Stream
-        {
-            readonly Stream _stream;
-
-            public override bool CanRead => _stream.CanRead;
-
-            public override bool CanSeek => _stream.CanSeek;
-
-            public override bool CanWrite { get; }
-
-            public override long Length => _stream.Length;
-
-            public override long Position { get; set; }
-
-            public StreamProxy(Stream stream, bool canWrite)
-            {
-                _stream = stream;
-                Position = _stream.Position;
-                CanWrite = canWrite;
-            }
-
-            public override void Flush()
-            {
-                _stream.Flush();
-            }
-
-            public override int Read(byte[] buffer, int offset, int count)
-            {
-                _stream.Position = Position;
-                var result = _stream.Read(buffer, offset, count);
-                Position = _stream.Position;
-
-                return result;
-            }
-
-            public override long Seek(long offset, SeekOrigin origin)
-            {
-                _stream.Position = Position;
-                var result = _stream.Seek(offset, origin);
-                Position = _stream.Position;
-
-                return result;
-            }
-
-            public override void SetLength(long value)
-            {
-                _stream.Position = Position;
-                _stream.SetLength(value);
-                Position = _stream.Position;
-            }
-
-            public override void Write(byte[] buffer, int offset, int count)
-            {
-                if (!CanWrite)
-                {
-                    throw new NotSupportedException();
-                }
-
-                _stream.Position = Position;
-                _stream.Write(buffer, offset, count);
-                Position = _stream.Position;
-            }
-        }
-
         /// <summary>
         /// Разбивает один поток к конфигу на несколько независимых потоков к конкретным секциям этого конфига
         /// </summary>
@@ -228,11 +164,79 @@ namespace TinyConfig
             }
         }
 
+        /// <summary>
+        /// Обертка над потоком, которая может ограничивать доступ на запись
+        /// </summary>
+        class StreamProxy : Stream
+        {
+            readonly Stream _stream;
+
+            public override bool CanRead => _stream.CanRead;
+
+            public override bool CanSeek => _stream.CanSeek;
+
+            public override bool CanWrite { get; }
+
+            public override long Length => _stream.Length;
+
+            public override long Position { get; set; }
+
+            public StreamProxy(Stream stream, bool canWrite)
+            {
+                _stream = stream;
+                Position = _stream.Position;
+                CanWrite = canWrite;
+            }
+
+            public override void Flush()
+            {
+                _stream.Flush();
+            }
+
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                _stream.Position = Position;
+                var result = _stream.Read(buffer, offset, count);
+                Position = _stream.Position;
+
+                return result;
+            }
+
+            public override long Seek(long offset, SeekOrigin origin)
+            {
+                _stream.Position = Position;
+                var result = _stream.Seek(offset, origin);
+                Position = _stream.Position;
+
+                return result;
+            }
+
+            public override void SetLength(long value)
+            {
+                _stream.Position = Position;
+                _stream.SetLength(value);
+                Position = _stream.Position;
+            }
+
+            public override void Write(byte[] buffer, int offset, int count)
+            {
+                if (!CanWrite)
+                {
+                    throw new NotSupportedException();
+                }
+
+                _stream.Position = Position;
+                _stream.Write(buffer, offset, count);
+                Position = _stream.Position;
+            }
+        }
+
         class SectionAccessInfo
         {
             public Section Section { get; }
             public bool ReadWriteStreamCreated { get; set; }
             public bool AnyStreamCreated { get; set; }
+
 
             public SectionAccessInfo(Section section, bool readWriteStreamCreated, bool anyStreamCreated)
             {
@@ -309,6 +313,11 @@ namespace TinyConfig
                 default:
                     throw new NotSupportedException();
             }
+        }
+
+        void closeStream(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         public override int GetHashCode()
