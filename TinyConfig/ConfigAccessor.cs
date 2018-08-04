@@ -8,31 +8,50 @@ using System.Runtime.CompilerServices;
 using TinyConfig.Marshallers;
 using Utilities;
 using Utilities.Extensions;
+using Utilities.Types;
 
 namespace TinyConfig
 {
     public class ConfigAccessor
     {
+        enum MarshallerType
+        {
+            EXACT,
+            MULTIPLE,
+        }
+
         readonly ConfigReaderWriter _config;
         readonly HashSet<string> _proxyKeys = new HashSet<string>();
-        readonly HashSet<TypeMarshaller> _marshallers = new HashSet<TypeMarshaller>()
-        {
-            new BooleanMarshaller(),
-            new SByteMarshaller(),
-            new ByteMarshaller(),
-            new Int16Marshaller(),
-            new UInt16Marshaller(),
-            new Int32Marshaller(),
-            new UInt32Marshaller(),
-            new Int64Marshaller(),
-            new UInt64Marshaller(),
-            new SingleMarshaller(),
-            new DoubleMarshaller(),
-            new StringMarshaller(),
-            new MemoryStreamMarshaller(),
-
-            new EnumMarshaller()
-        };
+        readonly Dictionary<MarshallerType, List<TypeMarshaller>> _marshallers
+            = new Dictionary<MarshallerType, List<TypeMarshaller>>()
+            {
+                {
+                    MarshallerType.EXACT,
+                    new List<TypeMarshaller>()
+                    {
+                        new BooleanMarshaller(),
+                        new SByteMarshaller(),
+                        new ByteMarshaller(),
+                        new Int16Marshaller(),
+                        new UInt16Marshaller(),
+                        new Int32Marshaller(),
+                        new UInt32Marshaller(),
+                        new Int64Marshaller(),
+                        new UInt64Marshaller(),
+                        new SingleMarshaller(),
+                        new DoubleMarshaller(),
+                        new StringMarshaller(),
+                        new MemoryStreamMarshaller(),
+                    }
+                },
+                {
+                    MarshallerType.MULTIPLE,
+                    new List<TypeMarshaller>()
+                    {
+                        new EnumMarshaller()
+                    }
+                }
+            };
 
         public ConfigSourceInfo SourceInfo { get; }
 
@@ -64,7 +83,14 @@ namespace TinyConfig
         public ConfigAccessor AddMarshaller<T>() 
             where T : TypeMarshaller, new()
         {
-            _marshallers.Add(new T());
+            if (typeof(ExactTypeMarshaller).IsAssignableFrom(typeof(T)))
+            {
+                _marshallers[MarshallerType.EXACT].Insert(0, new T());
+            }
+            else
+            {
+                _marshallers[MarshallerType.MULTIPLE].Insert(0, new T());
+            }
 
             return this;
         }
@@ -83,8 +109,8 @@ namespace TinyConfig
             var valueType = typeof(T).IsArray
                 ? typeof(T).GetElementType()
                 : typeof(T);
-            var marshaller = _marshallers
-                .OrderBy(m => typeof(ExactTypeMarshaller).IsAssignableFrom(m.GetType()))
+            var marshaller = ArrayUtils
+                .ConcatAll(_marshallers[MarshallerType.EXACT], _marshallers[MarshallerType.MULTIPLE])
                 .FirstOrDefault(m => m.IsTypeSupported(valueType));
             var section = new Section(_config.RootSection, subsection);
             if (marshaller == null)

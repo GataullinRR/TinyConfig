@@ -44,17 +44,48 @@ namespace TinyConfig.Tests
             }
         }
 
+        class MyIntMarshaller : ExactTypeMarshaller<int>
+        {
+            public override bool TryPack(int value, out string result)
+            {
+                result = "DEC: " + value.ToString();
+
+                return true;
+            }
+
+            public override bool TryUnpack(string packed, out int result)
+            {
+                result = packed.Skip(5).Aggregate().ParseToInt32Invariant();
+
+                return true;
+            }
+        }
 
         [Test()]
         public void AddMarshaller_Test()
         {
-            var config = Configurable.CreateConfig("AddMarshaller").Clear().AddMarshaller<VectorMarshaller>();
+            var config = Configurable.CreateConfig("AddMarshaller").Clear()
+                .AddMarshaller<VectorMarshaller>();
             config.ReadValue(10, "SomeInt32");
             config.ReadValue(new V2(-9, 9), "SomeV2");
 
             var actual = config.ToString();
             var expected = @"SomeInt32 =10
 SomeV2 =X:-9 Y:9
+";
+
+            Assert.AreEqual(expected, actual);
+        }
+        
+        [Test()]
+        public void OverrideMarshaller_Test()
+        {
+            var config = Configurable.CreateConfig("OverrideMarshaller_Test").Clear()
+                .AddMarshaller<MyIntMarshaller>();
+            config.ReadValue(10, "SomeInt32");
+
+            var actual = config.ToString();
+            var expected = @"SomeInt32 =DEC: 10
 ";
 
             Assert.AreEqual(expected, actual);
