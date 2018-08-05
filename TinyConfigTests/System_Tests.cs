@@ -8,19 +8,20 @@ using System.Threading.Tasks;
 using Utilities;
 using Utilities.Extensions;
 using System.IO;
+using Vectors;
 
 namespace TinyConfig.Tests
 {
     [TestFixture()]
-    public class Configurable_Tests
+    public class System_Tests
     {
         [Test()]
-        public void OpenSameConfigAsReadOnly_ConcurrentAccessTest()
+        public void OpenSameConfigAsReadOnly()
         {
-            var config1 = Configurable.CreateConfig("OpenSameConfigAsReadOnly_ConcurrentAccessTest", "Access", ConfigAccess.READ_ONLY);
-            var config2 = Configurable.CreateConfig("OpenSameConfigAsReadOnly_ConcurrentAccessTest", "Access", ConfigAccess.READ_ONLY);
-            var accessor1 = config1.ReadValue(5, "SomeInt32");
-            var accessor2 = config2.ReadValue(15, "SomeInt32");
+            var config1 = Configurable.CreateConfig("OpenSameConfigAsReadOnly", "Access", ConfigAccess.READ_ONLY);
+            var config2 = Configurable.CreateConfig("OpenSameConfigAsReadOnly", "Access", ConfigAccess.READ_ONLY);
+            var accessor1 = config1.ReadValue(1, "Key");
+            var accessor2 = config2.ReadValue(2, "Key");
 
             var actual1 = config1.ToString();
             var expected1 = @"" + Global.NL;
@@ -29,31 +30,31 @@ namespace TinyConfig.Tests
 
             Assert.AreEqual(expected1, actual1);
             Assert.AreEqual(expected2, actual2);
-            Assert.AreEqual(5, accessor1.Value);
-            Assert.AreEqual(15, accessor2.Value);
+            Assert.AreEqual(1, accessor1.Value);
+            Assert.AreEqual(2, accessor2.Value);
         }
 
         [Test()]
-        public void OpenSameConfigAsReadWrite_ConcurrentAccessTest()
+        public void OpenSameConfigAsReadWrite()
         {
-            Configurable.CreateConfig("OpenSameConfigAsReadWrite_ConcurrentAccessTest", "Access", ConfigAccess.READ_WRITE);
+            Configurable.CreateConfig("OpenSameConfigAsReadWrite", "Access", ConfigAccess.READ_WRITE);
             Assert.Throws<InvalidOperationException>(() =>
-                Configurable.CreateConfig("OpenSameConfigAsReadWrite_ConcurrentAccessTest", "Access", ConfigAccess.READ_WRITE));
+                Configurable.CreateConfig("OpenSameConfigAsReadWrite", "Access", ConfigAccess.READ_WRITE));
         }
 
         [Test()]
-        public void OpenSameConfig_ConcurrentAccessTest()
+        public void OpenAlreadyOpenedAsReadOnlyConfigAsReadWrite()
         {
-            Configurable.CreateConfig("OpenSameConfig_ConcurrentAccessTest1", "Access", ConfigAccess.READ_ONLY);
-            Configurable.CreateConfig("OpenSameConfig_ConcurrentAccessTest1", "Access", ConfigAccess.READ_ONLY);
+            Configurable.CreateConfig("OpenAlreadyOpenedAsReadOnlyConfigAsReadWrite", "Access", ConfigAccess.READ_ONLY);
+            Configurable.CreateConfig("OpenAlreadyOpenedAsReadOnlyConfigAsReadWrite", "Access", ConfigAccess.READ_ONLY);
             Assert.Throws<InvalidOperationException>(() => 
-                Configurable.CreateConfig("OpenSameConfig_ConcurrentAccessTest1", "Access", ConfigAccess.READ_WRITE));
+                Configurable.CreateConfig("OpenAlreadyOpenedAsReadOnlyConfigAsReadWrite", "Access", ConfigAccess.READ_WRITE));
         }
 
         [Test()]
-        public void OpenConfigAsReadOnly_AccessTest()
+        public void ReadFromEmptyReadOnlyConfig()
         {
-            var config = Configurable.CreateConfig("OpenConfigAsReadOnly_AccessTest", "Access", ConfigAccess.READ_ONLY);
+            var config = Configurable.CreateConfig("ReadFromEmptyReadOnlyConfig", "Access", ConfigAccess.READ_ONLY);
             var accessor1 = config.ReadValue(10, "SomeInt32");
             var accessor2 = config.ReadValue(1.5, "SomeDouble");
 
@@ -66,9 +67,9 @@ namespace TinyConfig.Tests
         }
 
         [Test()]
-        public void OpenConfigAsReadOnlyAndModify_AccessTest()
+        public void ModifyingValueInReadOnlyConfig()
         {
-            var config = Configurable.CreateConfig("OpenConfigAsReadOnlyAndModify_AccessTest", "Access", ConfigAccess.READ_ONLY);
+            var config = Configurable.CreateConfig("ModifyingValueInReadOnlyConfig", "Access", ConfigAccess.READ_ONLY);
             var accessor1 = config.ReadValue(10, "SomeInt32");
             var accessor2 = config.ReadValue(1.5, "SomeDouble");
 
@@ -85,21 +86,7 @@ namespace TinyConfig.Tests
         }
 
         [Test()]
-        public void OpenNotEmptyConfigAndRead_Test()
-        {
-            var config = Configurable.CreateConfig("OpenEmptyConfigAndRead_Test").Clear();
-            config.ReadValue("1", "Key1");
-            config.ReadValue("2", "Key2");
-            config.Close();
-            Configurable.ReleaseFile(config.SourceInfo.FilePath);
-
-            config = Configurable.CreateConfig("OpenEmptyConfigAndRead_Test");
-            Assert.AreEqual("1", config.ReadValue("", "Key1").Value);
-            Assert.AreEqual("2", config.ReadValue("", "Key2").Value);
-        }
-
-        [Test()]
-        public void OpenConfigFromStream_Test()
+        public void ReadConfigFromStream()
         {
             var configData = @"SomeInt32 =10
 SomeDouble =1.5" + Global.NL;
@@ -111,63 +98,7 @@ SomeDouble =1.5" + Global.NL;
         }
 
         [Test()]
-        public void ConfigClose_Test()
-        {
-            var config = Configurable.CreateConfig("ConfigClose_Test").Clear();
-            config.ReadValue("1", "Key1");
-            config.Close();
-
-            Assert.Throws<IOException>(() => new FileStream(config.SourceInfo.FilePath, FileMode.Open));
-            Configurable.ReleaseFile(config.SourceInfo.FilePath);
-            Assert.DoesNotThrow(() => new FileStream(config.SourceInfo.FilePath, FileMode.Open));
-        }
-
-        [Test()]
-        public void ReadValueAfterClose_Test()
-        {
-            var config = Configurable.CreateConfig("ReadValueAfterClose_Test").Clear();
-            var written = config.ReadValue("1", "Key1");
-            config.Close();
-            Configurable.ReleaseFile(config.SourceInfo.FilePath);
-
-            config = Configurable.CreateConfig("ReadValueAfterClose_Test");
-            config.Close();
-            var read = config.ReadValue("", "Key1");
-
-            Assert.AreEqual(written.Value, read.Value);
-        }
-
-        [Test()]
-        public void WriteValueAfterFileReleased_Test()
-        {
-            var config = Configurable.CreateConfig("ReadValueAfterFileReleased_Test").Clear();
-            Configurable.ReleaseFile(config.SourceInfo.FilePath);
-            Assert.Throws<ObjectDisposedException>(() => config.ReadValue("1", "Key1"));
-        }
-
-        [Test()]
-        public void WriteValueAfterClose_Test()
-        {
-            var config = Configurable.CreateConfig("WriteValueAfterClose_Test").Clear();
-            config.Close();
-            var value = config.ReadValue("1", "Key1");
-
-            Assert.AreEqual("1", value.Value);
-        }
-
-        [Test()]
-        public void WriteAndMoodifyValueAfterClose_Test()
-        {
-            var config = Configurable.CreateConfig("WriteAndMoodifyValueAfterClose_Test").Clear();
-            config.Close();
-            var value = config.ReadValue("1", "Key1");
-            value.Value = "2";
-
-            Assert.AreEqual("2", value.Value);
-        }
-
-        [Test()]
-        public void CreateConfigFromStream_Test()
+        public void WriteToCreatedFromStreamConfig()
         {
             var stream = File.Open(Path.GetTempFileName(), FileMode.Open);
             var config = Configurable.CreateConfig(stream).Clear();
@@ -182,10 +113,28 @@ SomeDouble =1.3" + Global.NL;
         }
 
         [Test()]
-        public void CreateConfig_WithTwoAccesorsTest()
+        public void ReleaseFile()
         {
-            var configA = Configurable.CreateConfig("CreateConfig_WithTwoAccesorsTest", "SomeDir", "SectionA").Clear();
-            var configB = Configurable.CreateConfig("CreateConfig_WithTwoAccesorsTest", "SomeDir", "SectionB").Clear();
+            var config = Configurable.CreateConfig("ReleaseFile").Clear();
+
+            Assert.Throws<IOException>(() => new FileStream(config.SourceInfo.FilePath, FileMode.Open));
+            Configurable.ReleaseFile(config.SourceInfo.FilePath);
+            Assert.DoesNotThrow(() => new FileStream(config.SourceInfo.FilePath, FileMode.Open));
+        }
+
+        [Test()]
+        public void WriteValueAfterFileReleased()
+        {
+            var config = Configurable.CreateConfig("WriteValueAfterFileReleased").Clear();
+            Configurable.ReleaseFile(config.SourceInfo.FilePath);
+            Assert.Throws<ObjectDisposedException>(() => config.ReadValue("1", "Key1"));
+        }
+
+        [Test()]
+        public void WriteToConfigWithTwoSections()
+        {
+            var configA = Configurable.CreateConfig("WriteToConfigWithTwoSections", "SomeDir", "SectionA").Clear();
+            var configB = Configurable.CreateConfig("WriteToConfigWithTwoSections", "SomeDir", "SectionB").Clear();
 
             configA.ReadValue("A", "SomeString");
             configB.ReadValue("B", "SomeString");
@@ -204,9 +153,9 @@ SomeString =#'B'" + Global.NL;
         }
 
         [Test()]
-        public void CreateConfig_Test()
+        public void WriteValue()
         {
-            var config = Configurable.CreateConfig("Test", "SomeDir").Clear();
+            var config = Configurable.CreateConfig("WriteValue", "SomeDir").Clear();
             config.ReadValue(10, "SomeInt32");
             config.ReadValue(1.3, "SomeDouble");
 
@@ -218,9 +167,9 @@ SomeDouble =1.3" + Global.NL;
         }
 
         [Test()]
-        public void CreateConfig_WithCommentaryTest()
+        public void WriteCommentary()
         {
-            var config = Configurable.CreateConfig("CreateConfig_WithCommentaryTest", "SomeDir").Clear();
+            var config = Configurable.CreateConfig("WriteCommentary", "SomeDir").Clear();
             var accessor = config.ReadValue(10, "SomeInt32").SetComment("Hello!");
             config.ReadValue(1.3, "SomeDouble");
 
@@ -233,9 +182,9 @@ SomeDouble =1.3" + Global.NL;
         }
 
         [Test()]
-        public void CreateConfig_WithMultilineCommentaryTest()
+        public void WriteMultilineCommentary()
         {
-            var config = Configurable.CreateConfig("CreateConfig_WithMultilineCommentaryTest", "SomeDir").Clear();
+            var config = Configurable.CreateConfig("WriteMultilineCommentary", "SomeDir").Clear();
             var accessor = config.ReadValue(-1, "SomeInt32").SetComment($"First line - {Global.NL}second");
             config.ReadValue(1.3e2, "SomeDouble");
 
@@ -248,9 +197,9 @@ SomeDouble =130" + Global.NL;
         }
 
         [Test()]
-        public void CreateConfig_ArrayValueTest()
+        public void WriteArrayValue()
         {
-            var config = Configurable.CreateConfig("CreateConfig_ArrayValueTest").Clear();
+            var config = Configurable.CreateConfig("WriteArrayValue").Clear();
             config.ReadValue(10, "SomeInt32");
             config.ReadValue(new double[] { -1, 2, 2.345 }, "SomeDoubleArr");
             config.ReadValue(new double[] { }, "SomeEmptyDoubleArr");
@@ -264,17 +213,9 @@ SomeEmptyDoubleArr =" + Global.NL;
         }
 
         [Test()]
-        public void CreateConfig_NullableValueTypesSupportTest()
+        public void ModifyValue()
         {
-            var config = Configurable.CreateConfig("CreateConfig_NullableValueTypesSupportTest").Clear();
-            Assert.Throws<NotSupportedException>(() => config.ReadValue<int?>(null, "SomeInt32"));
-            Assert.Throws<NotSupportedException>(() => config.ReadValue(new double?[] { null, -1, 2, 2.345, null }, "SomeDoubleArr"));
-        }
-
-        [Test()]
-        public void CreateAndModify_Test()
-        {
-            var config = Configurable.CreateConfig("CreateAndModify", "").Clear();
+            var config = Configurable.CreateConfig("ModifyValue", "").Clear();
             config.ReadValue(10, "SomeInt32");
             var accessor = config.ReadValue("Hello ", "SomeString");
             config.ReadValue(3, "SomeByte");
@@ -283,9 +224,9 @@ SomeEmptyDoubleArr =" + Global.NL;
         }
 
         [Test()]
-        public void CreateAndModify_FlushTest()
+        public void FlushAfterValueModifying()
         {
-            var config = Configurable.CreateConfig("CreateAndModify_FlushTest").Clear();
+            var config = Configurable.CreateConfig("FlushAfterValueModifying").Clear();
             var initial = new FileInfo(config.SourceInfo.FilePath).Length;
 
             config.ReadValue(10, "SomeInt32");
@@ -306,9 +247,9 @@ SomeEmptyDoubleArr =" + Global.NL;
         }
 
         [Test()]
-        public void CreateAndModify_WithCommentaryTest()
+        public void ReadAndModifyCommentary()
         {
-            var config = Configurable.CreateConfig("CreateAndModify_WithCommentaryTest", "SomeDir").Clear();
+            var config = Configurable.CreateConfig("ReadAndModifyCommentary", "SomeDir").Clear();
             config.ReadValue((byte)3, "SomeUInt8");
             var accessor = config.ReadValue(new int[] { 1, 2, 3 }, "SomeInt32Arr").SetComment("Hello!");
             config.ReadValue("Hello", "SomeString");
@@ -332,9 +273,9 @@ SomeString =#'Hello'" + Global.NL;
         }
 
         [Test()]
-        public void CreateAndModify_RemoveCommentaryTest()
+        public void ReadAndEraseCommentary()
         {
-            var config = Configurable.CreateConfig("CreateAndModify_RemoveCommentaryTest", "SomeDir").Clear();
+            var config = Configurable.CreateConfig("ReadAndEraseCommentary", "SomeDir").Clear();
             config.ReadValue((byte)3, "SomeUInt8").SetComment("Hi!");
             config.ReadValue(new int[] { 1, 2, 3 }, "SomeInt32Arr");
             var accessor = config.ReadValue("Hello", "SomeString").SetComment("Hello!");
@@ -358,9 +299,9 @@ SomeString =#'Hello'" + Global.NL;
         }
 
         [Test()]
-        public void CreateAndModifyArray_Test()
+        public void ModifyArrayValue()
         {
-            var config = Configurable.CreateConfig("CreateAndModifyArray").Clear();
+            var config = Configurable.CreateConfig("ModifyArrayValue").Clear();
             var accessor = config.ReadValue(new[] { 10, 20, 55 }, "SomeInt32Array");
 
             var expected = Global.Random.NextUnique(0, 1000, 10).ToArray();
@@ -375,9 +316,9 @@ SomeString =#'Hello'" + Global.NL;
             A, B, C
         }
         [Test()]
-        public void CreateAndModifyEnum_Test()
+        public void ReadWriteModifyEnum()
         {
-            var config = Configurable.CreateConfig("CreateAndModifyEnum_Test").Clear();
+            var config = Configurable.CreateConfig("ReadWriteModifyEnum").Clear();
             var accessor1 = config.ReadValue(new[] { ABC.A, ABC.B, ABC.C }, "EnumArr");
             var accessor2 = config.ReadValue(ABC.B, "Enum");
 
@@ -404,11 +345,146 @@ Enum =C\\it is single value" + Global.NL;
         }
 
         [Test()]
-        public void CreateTwoFieldsWithSameName_Test()
+        public void CreateTwoFieldsWithSameName()
         {
-            var config = Configurable.CreateConfig("CreateTwoFieldsWithSameName", "").Clear();
+            var config = Configurable.CreateConfig("CreateTwoFieldsWithSameName").Clear();
             config.ReadValue("ABC", "SomeValue");
             Assert.Throws<InvalidOperationException>(() => config.ReadValue(123, "SomeValue"));
+        }
+
+        [Test()]
+        public void ModifyAfterClose()
+        {
+            var config = Configurable.CreateConfig("ModifyAfterClose").Clear();
+            config.Close();
+            var value = config.ReadValue("1", "Key1");
+            value.Value = "2";
+
+            Assert.AreEqual("2", value.Value);
+        }
+
+        class VectorMarshaller : ExactTypeMarshaller<V2>
+        {
+            public override bool TryPack(V2 value, out string result)
+            {
+                result = $"X:{value.X.ToStringInvariant()} Y:{value.Y.ToStringInvariant()}";
+
+                return true;
+            }
+
+            public override bool TryUnpack(string packed, out V2 result)
+            {
+                var xy = packed.Split(" ");
+                var x = extractValue(xy[0]);
+                var y = extractValue(xy[1]);
+                result = new V2(x, y);
+
+                return true;
+
+                double extractValue(string str)
+                {
+                    return str
+                        .SkipWhile(c => c != ':')
+                        .Skip(1)
+                        .TakeWhile(c => !char.IsWhiteSpace(c))
+                        .Aggregate()
+                        .ParseToDoubleInvariant();
+                }
+            }
+        }
+
+        class MyIntMarshaller : ExactTypeMarshaller<int>
+        {
+            public override bool TryPack(int value, out string result)
+            {
+                result = "DEC: " + value.ToString();
+
+                return true;
+            }
+
+            public override bool TryUnpack(string packed, out int result)
+            {
+                result = packed.Skip(5).Aggregate().ParseToInt32Invariant();
+
+                return true;
+            }
+        }
+
+        [Test()]
+        public void AddMarshaller()
+        {
+            var config = Configurable.CreateConfig("AddMarshaller").Clear()
+                .AddMarshaller<VectorMarshaller>();
+            config.ReadValue(10, "SomeInt32");
+            config.ReadValue(new V2(-9, 9), "SomeV2");
+
+            var actual = config.ToString();
+            var expected = @"SomeInt32 =10
+SomeV2 =X:-9 Y:9
+";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void OverrideStandardMarshaller()
+        {
+            var config = Configurable.CreateConfig("OverrideStandardMarshaller").Clear()
+                .AddMarshaller<MyIntMarshaller>();
+            config.ReadValue(10, "SomeInt32");
+
+            var actual = config.ToString();
+            var expected = @"SomeInt32 =DEC: 10
+";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void WriteNullableValueTypes()
+        {
+            var config = Configurable.CreateConfig("WriteNullableValueTypes").Clear();
+            Assert.Throws<NotSupportedException>(() => config.ReadValue<int?>(null, "SomeInt32"));
+            Assert.Throws<NotSupportedException>(() => config.ReadValue(new double?[] { null, -1, 2, 2.345, null }, "SomeDoubleArr"));
+        }
+
+        [Test()]
+        public void ReadFromNotEmptyConfig()
+        {
+            var config = Configurable.CreateConfig("ReadFromNotEmptyConfig").Clear();
+            config.ReadValue("1", "Key1");
+            config.ReadValue("2", "Key2");
+            config.Close();
+            Configurable.ReleaseFile(config.SourceInfo.FilePath);
+
+            config = Configurable.CreateConfig("ReadFromNotEmptyConfig");
+            Assert.AreEqual("1", config.ReadValue("", "Key1").Value);
+            Assert.AreEqual("2", config.ReadValue("", "Key2").Value);
+        }
+
+        [Test()]
+        public void ReadAfterClose()
+        {
+            var config = Configurable.CreateConfig("ReadAfterClose").Clear();
+            var written = config.ReadValue("1", "Key1");
+            config.Close();
+            Configurable.ReleaseFile(config.SourceInfo.FilePath);
+
+            config = Configurable.CreateConfig("ReadAfterClose");
+            config.Close();
+            var read = config.ReadValue("", "Key1");
+
+            Assert.AreEqual(written.Value, read.Value);
+        }
+
+        [Test()]
+        public void WriteValueAfterClose()
+        {
+            var config = Configurable.CreateConfig("ReadValue_WriteValueAfterClose").Clear();
+            config.Close();
+            var value = config.ReadValue("1", "Key1");
+
+            Assert.AreEqual("1", value.Value);
         }
     }
 }
