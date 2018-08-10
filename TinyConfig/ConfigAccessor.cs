@@ -110,7 +110,7 @@ namespace TinyConfig
                 ? typeof(T).GetElementType()
                 : typeof(T);
             var marshaller = ArrayUtils
-                .ConcatAll(_marshallers[MarshallerType.EXACT], _marshallers[MarshallerType.MULTIPLE])
+                .ConcatSequences(_marshallers[MarshallerType.EXACT], _marshallers[MarshallerType.MULTIPLE])
                 .FirstOrDefault(m => m.IsTypeSupported(valueType));
             var section = new Section(_config.RootSection, subsection);
             if (marshaller == null)
