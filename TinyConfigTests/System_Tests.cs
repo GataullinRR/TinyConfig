@@ -153,6 +153,72 @@ SomeString =#'B'" + Global.NL;
         }
 
         [Test()]
+        public void WriteToSubsection()
+        {
+            var config = Configurable.CreateConfig("WriteToSubsection").Clear();
+            config.ReadValueFrom("A", null, "SomeString");
+            config.ReadValueFrom("B", "Section1", "SomeString");
+            config.ReadValueFrom("C", "Section1.Subsection1", "SomeString");
+
+            var actual = config.ToString();
+            var expected = @"SomeString =#'A'
+[Section1]
+SomeString =#'B'
+[Section1.Subsection1]
+SomeString =#'C'
+";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void ModifyValueInSubsection()
+        {
+            var config = Configurable.CreateConfig("ModifyValueInSubsection").Clear();
+            var a = config.ReadValueFrom("A", null, "SomeString");
+            var b = config.ReadValueFrom("B", "Section1", "SomeString");
+            var c = config.ReadValueFrom("C", "Section1.Subsection1", "SomeString");
+            c.Value = "NewC";
+            a.Value = "NewA";
+            b.Value = "NewB";
+
+            var actual = config.ToString();
+            var expected = @"SomeString =#'NewA'
+[Section1]
+SomeString =#'NewB'
+[Section1.Subsection1]
+SomeString =#'NewC'
+";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void ReadFromSubsectionOfNotEmptyConfig()
+        {
+            var config = Configurable.CreateConfig("ReadFromSubsectionOfNotEmptyConfig").Clear();
+            config.ReadValueFrom("A", null, "SomeString");
+            config.ReadValueFrom("B", "Section1", "SomeString");
+            config.ReadValueFrom("C", "Section1.Subsection1", "SomeString");
+            config.Close();
+            Configurable.ReleaseFile(config.SourceInfo.FilePath);
+
+            config = Configurable.CreateConfig("ReadFromSubsectionOfNotEmptyConfig");
+            var actual = config.ToString();
+            var expected = @"SomeString =#'A'
+[Section1]
+SomeString =#'B'
+[Section1.Subsection1]
+SomeString =#'C'
+";
+
+            Assert.AreEqual(expected, actual);
+            Assert.AreEqual("A", config.ReadValueFrom("", null, "SomeString"));
+            Assert.AreEqual("B", config.ReadValueFrom("", "Section1", "SomeString"));
+            Assert.AreEqual("C", config.ReadValueFrom("", "Section1.Subsection1", "SomeString"));
+        }
+
+        [Test()]
         public void WriteValue()
         {
             var config = Configurable.CreateConfig("WriteValue", "SomeDir").Clear();

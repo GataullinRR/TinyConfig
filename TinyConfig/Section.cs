@@ -35,15 +35,20 @@ namespace TinyConfig
                 && FullName.Remove(Constants.SUBSECTION_SEPARATOR).All(char.IsLetterOrDigit);
         }
 
+        public bool IsInsideSection(Section section)
+        {
+            return IsInsideSection(section.FullName);
+        }
         public bool IsInsideSection(string sectionFullName)
         {
             var passedInSection = new Section(sectionFullName);
-            if (!passedInSection.isValid())
+            //if (!passedInSection.isValid())
+            if (!passedInSection.IsCorrect)
             {
                 throw new ArgumentException();
             }
             
-            if (IsRoot)
+            if (IsRoot || passedInSection.IsRoot)
             {
                 return true;
             }
@@ -52,15 +57,15 @@ namespace TinyConfig
                 return FullName.StartsWith(passedInSection.FullName);
             }
         }
-        bool isValid()
-        {
-            return IsRoot || 
-                    (
-                        FullName.Length > 0
-                        && !FullName.StartsWith(Constants.SUBSECTION_SEPARATOR)
-                        && !FullName.EndsWith(Constants.SUBSECTION_SEPARATOR)
-                    );
-        }
+        //bool isValid()
+        //{
+        //    return IsRoot || 
+        //            (
+        //                FullName.Length > 0
+        //                && !FullName.StartsWith(Constants.SUBSECTION_SEPARATOR)
+        //                && !FullName.EndsWith(Constants.SUBSECTION_SEPARATOR)
+        //            );
+        //}
 
         public bool Equals(Section other)
         {

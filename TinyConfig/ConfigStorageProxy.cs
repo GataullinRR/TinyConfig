@@ -80,18 +80,22 @@ namespace TinyConfig
                 _sections = sections.ToArray();
             }
 
+            /// <summary>
+            /// Возвращает поток с данными из указанной секции и всех ее дочерних секций
+            /// </summary>
+            /// <param name="sectionName"></param>
+            /// <returns></returns>
             public Stream CreateStream(string sectionName)
             {
                 throwIfDisposed();
-
-                var sectionIndex = _sections.Find(s => s.Section.FullName == sectionName);
-                var section = sectionIndex >= 0 ? _sections[sectionIndex] : null;
 
                 if (_sectionStreams.Any(si => si.SectionName == sectionName))
                 {
                     throw new InvalidOperationException();
                 }
 
+                var sectionIndex = _sections.Find(s => s.Section.FullName == sectionName);
+                var section = sectionIndex >= 0 ? _sections[sectionIndex] : null;
                 NotifiableStream stream = null;
                 if (section == null)
                 {
