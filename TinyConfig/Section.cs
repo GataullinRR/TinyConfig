@@ -27,7 +27,7 @@ namespace TinyConfig
         public Section(string fullName)
         {
             FullName = fullName;
-            Order = FullName?.FindAll(Constants.SUBSECTION_SEPARATOR)?.Count ?? 0;
+            Order = FullName?.FindAll(Constants.SUBSECTION_SEPARATOR)?.Count + 1 ?? 0;
             IsRoot = FullName == null;
             IsCorrect = FullName == null
                 || !FullName.EndsWith(Constants.SUBSECTION_SEPARATOR)
@@ -48,9 +48,13 @@ namespace TinyConfig
                 throw new ArgumentException();
             }
             
-            if (IsRoot || passedInSection.IsRoot)
+            if (passedInSection.IsRoot)
             {
                 return true;
+            }
+            else if (IsRoot)
+            {
+                return false;
             }
             else
             {

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Utilities.Extensions;
 using Utilities.Types;
@@ -8,7 +9,7 @@ namespace TinyConfig
 {
     static class SectionsFinder
     {
-        public class SectionInfo
+        public class SectionInfo : IEquatable<SectionInfo>
         {
             public Section Section { get; }
             public IEnumerable<string> FullSection { get; }
@@ -24,6 +25,17 @@ namespace TinyConfig
                 Body = body;
                 SectionLocation = sectionLocation;
                 SectionBodyLocation = sectionBodyLocation;
+            }
+
+            public bool Equals(SectionInfo other)
+            {
+                return other == null
+                    ? false
+                    : Section.Equals(other.Section)
+                    && FullSection.SequenceEqual(other.FullSection)
+                    && Body.SequenceEqual(other.Body)
+                    && SectionLocation.Equals(other.SectionLocation)
+                    && SectionBodyLocation.Equals(other.SectionBodyLocation);
             }
 
             public override string ToString()
