@@ -60,7 +60,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\GeneralPurposeLibs\Utilities\Utilities.csproj">
+    <ProjectReference Include="..\..\GeneralPurposeLibs\Utilities\Utilities\Utilities.csproj">
       <Project>{b76d158d-0ad4-4656-848b-2b33e2684e08}</Project>
       <Name>Utilities</Name>
     </ProjectReference>

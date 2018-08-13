@@ -98,7 +98,7 @@
       <Project>{E8AC16FB-B9CE-4FD7-8B1F-871101DE11FD}</Project>
       <Name>MVVMUtilities</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\GeneralPurposeLibs\Utilities\Utilities.csproj">
+    <ProjectReference Include="..\..\GeneralPurposeLibs\Utilities\Utilities\Utilities.csproj">
       <Project>{b76d158d-0ad4-4656-848b-2b33e2684e08}</Project>
       <Name>Utilities</Name>
     </ProjectReference>

@@ -40,50 +40,72 @@ namespace TinyConfig
 
             public override string ToString()
             {
-                return new { Section, SectionLocation, SectionBodyLocation, Body = Body.AsMultilineString() }.ToString();
+                return new
+                {
+                    Section,
+                    SectionLocation,
+                    SectionBodyLocation,
+                    FullSection = FullSection.AsMultilineString()
+                }.ToString();
             }
         }
 
         public static IEnumerable<SectionInfo> GetSections(string[] iniFile)
         {
-            var readSections = new List<string>();
-            string currentSectionName = null;
-            var linesInCurrentSection = 0;
-            var lineEnumerator = new EnhancedEnumerator<string>(iniFile);
-            while (lineEnumerator.MoveNext())
+            return getSectionsWithoutChecking(iniFile)
+                .Distinct((si1, si2) => si1.Section.Equals(si2.Section));
+        }
+        static IEnumerable<SectionInfo> getSectionsWithoutChecking(string[] iniFile)
+        {
+            var NONE = new IntInterval(-1);
+            var EMPTY_ARR = Enumerable.Empty<string>();
+
+            var currentSectionStartIndex = 0;
+            string currentSection = null;
+            for (int i = 0; i < iniFile.Length; i++)
             {
-                var line = lineEnumerator.Current;
+                var line = iniFile[i];
                 var sectionName = tryExtractSectionName();
-                if (sectionName == null)
+                var isLastLine = i == iniFile.Length - 1;
+                if (sectionName != null || isLastLine)
                 {
-                    linesInCurrentSection++;
+                    var isRootSection = currentSection == null;
+                    var startOfSection = currentSectionStartIndex;
+                    // Root section have not [Section] header, so we have not to add 1 in this case
+                    var startOfBody = isRootSection ? currentSectionStartIndex : currentSectionStartIndex + 1;
+                    // We must not lost last line when coming to an end of file
+                    var endOfSection = (isLastLine && sectionName == null) ? i : (i - 1);
+                    var sectionLocation = new IntInterval(startOfSection, endOfSection);
+                    var bodyLocation = new IntInterval(startOfBody, endOfSection);
+
+                    if (endOfSection == -1)
+                    {
+                        sectionLocation = NONE;
+                        bodyLocation = NONE;
+                    }
+                    else if (startOfBody > endOfSection)
+                    {
+                        bodyLocation = currentSection == null ? sectionLocation : NONE;
+                    }
+
+                    var body = bodyLocation == NONE
+                        ? EMPTY_ARR
+                        : iniFile.Skip(bodyLocation.From).Take(bodyLocation.Len + 1);
+                    var section = sectionLocation == NONE
+                        ? EMPTY_ARR
+                        : iniFile.Skip(sectionLocation.From).Take(sectionLocation.Len + 1);
+                    yield return new SectionInfo(currentSection, section, body, sectionLocation, bodyLocation);
+
+                    currentSectionStartIndex = i;
+                    currentSection = sectionName;
                 }
-                if (sectionName != null || lineEnumerator.IsLastElement)
+                if (isLastLine && sectionName != null)
                 {
-                    if (readSections.NotContains(currentSectionName))
-                    {
-                        var bodyLocation = new IntInterval(lineEnumerator.Index - linesInCurrentSection, lineEnumerator.Index);
-                        var sectionLoaction = bodyLocation
-                            .SetFrom(sectionName == null ? bodyLocation.From : bodyLocation.From - 1);
-                        if (lineEnumerator.IsLastElement)
-                        {
-                            sectionLoaction += 1;
-                            bodyLocation += 1;
-                        }
-                        var body = iniFile.Skip(bodyLocation.From).Take(bodyLocation.Len);
-                        var section = iniFile.Skip(sectionLoaction.From).Take(sectionLoaction.Len);
-                        yield return new SectionInfo(currentSectionName, section, body, sectionLoaction, bodyLocation);
-                        readSections.Add(currentSectionName);
-                    }
-                    if (lineEnumerator.IsLastElement && sectionName != null && readSections.NotContains(sectionName))
-                    {
-                        yield return new SectionInfo(sectionName, new string[0], new string[0], IntInterval.Zero, IntInterval.Zero);
-                    }
-                    linesInCurrentSection = 0;
-                    currentSectionName = sectionName;
+                    var section = iniFile.Skip(i).Take(1);
+                    yield return new SectionInfo(sectionName, section, EMPTY_ARR, new IntInterval(i), NONE);
                 }
 
-                /////////////////////////////////
+                ////////////////////////////////
 
                 string tryExtractSectionName()
                 {

@@ -15,6 +15,60 @@ namespace TinyConfig.Tests
     class SectionsFinder_Tests
     {
         [Test()]
+        public void GetSections()
+        {
+            string data =
+    @"Key=1
+[S1]
+Key=2
+[S1.S1]
+Key=3
+[S1.S2]
+Key=4
+[S1.S2.S1]
+Key=5
+[S2]
+Key=6
+[S2.S1]
+Key=7
+[S3]
+Key=8";
+
+            var actualSections = SectionsFinder.GetSections(data.Split(Global.NL)).ToArray();
+
+            var expectedSections = new SectionsFinder.SectionInfo[]
+            {
+                new SectionsFinder.SectionInfo(null, new[] { "Key=1" }, new[] { "Key=1" }, new IntInterval(0, 0), new IntInterval(0, 0)),
+                new SectionsFinder.SectionInfo("S1", new[] { "[S1]", "Key=2" }, new[] { "Key=2" }, new IntInterval(1, 2), new IntInterval(2, 2)),
+                new SectionsFinder.SectionInfo("S1.S1", new[] { "[S1.S1]", "Key=3"   },  new[] { "Key=3" }, new IntInterval(3, 4), new IntInterval(4, 4)),
+                new SectionsFinder.SectionInfo("S1.S2", new[] { "[S1.S2]" , "Key=4" },  new[] { "Key=4" }, new IntInterval(5, 6), new IntInterval(6, 6)),
+                new SectionsFinder.SectionInfo("S1.S2.S1", new[] { "[S1.S2.S1]", "Key=5"  },  new[] { "Key=5" }, new IntInterval(7, 8), new IntInterval(8, 8)),
+                new SectionsFinder.SectionInfo("S2", new[] { "[S2]" , "Key=6" },  new[] { "Key=6" }, new IntInterval(9, 10), new IntInterval(10, 10)),
+                new SectionsFinder.SectionInfo("S2.S1", new[] { "[S2.S1]", "Key=7"  },  new[] { "Key=7" }, new IntInterval(11, 12), new IntInterval(12, 12)),
+                new SectionsFinder.SectionInfo("S3", new[] { "[S3]" , "Key=8" },  new[] { "Key=8" }, new IntInterval(13, 14), new IntInterval(14, 14)),
+            };
+
+            Assert.AreEqual(expectedSections, actualSections);
+        }
+
+        [Test()]
+        public void GetSections_OnlyRootSection()
+        {
+            string data =
+    @"Key1=1
+Key2=2";
+
+            var actualSections = SectionsFinder.GetSections(data.Split(Global.NL)).ToArray();
+
+            var expectedSections = new SectionsFinder.SectionInfo[]
+            {
+                new SectionsFinder.SectionInfo(null, new[] { "Key1=1", "Key2=2" }, new[] { "Key1=1", "Key2=2" }, new IntInterval(0, 1), new IntInterval(0, 1)),
+            };
+
+            Assert.AreEqual(expectedSections, actualSections);
+        }
+
+        [Test()]
         public void GetSections_OnlyBodylessSections()
         {
             string data =
@@ -28,13 +82,8 @@ namespace TinyConfig.Tests
 [S3]";
 
             var sections = SectionsFinder.GetSections(data.Split(Global.NL)).ToArray();
-
             var actualSections = sections.Select(s => s.Section);
-            //var actualLocations = sections.Select(s => s.SectionLocation);
-
             var expectedSections = new[] { null, "S1", "S1.S1", "S1.S2", "S1.S2.S1", "S1.S2.S2", "S2", "S2.S1", "S3" }.Select(sn => new Section(sn));
-
-            //var expectedLocations = new[] { "0:0", "1:1", "2:2", "3:3", "4:4", "5:5", "6:6", "7:7", "8:8" }.Select(sn => Interval.Parse(sn).AsIntInterval);
 
             var dd = new SectionsFinder.SectionInfo[]
             {
@@ -50,7 +99,7 @@ namespace TinyConfig.Tests
             };
 
             Assert.AreEqual(expectedSections, actualSections);
-            //Assert.AreEqual(expectedLocations, actualLocations);
+            Assert.AreEqual(dd, sections);
         }
     }
 }

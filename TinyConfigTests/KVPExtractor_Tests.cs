@@ -98,7 +98,7 @@ KEY4=123";
             var actual = KVPExtractor.ExtractAll(new StreamReader(new MemoryStream(data.GetBytes(Encoding.UTF8))));
             var expected = new[]
             {
-                new ConfigKVP ("KEY1", new ConfigValue(" Value ", false), "comment1"),
+                new ConfigKVP("KEY1", new ConfigValue(" Value ", false), "comment1"),
                 new ConfigKVP("KEY2", new ConfigValue("Hello 'friend'!", true), " comment2 "),
                 new ConfigKVP("KEY3", new ConfigValue(" eeHel''''lo", false), null),
                 new ConfigKVP("KEY4", new ConfigValue("123", false), null),
