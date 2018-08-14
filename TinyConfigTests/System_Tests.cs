@@ -106,8 +106,8 @@ SomeDouble =1.5" + Global.NL;
             config.ReadValue(1.3, "SomeDouble");
 
             var actual = config.ToString();
-            var expected = @"SomeInt32 =10
-SomeDouble =1.3" + Global.NL;
+            var expected = @"SomeInt32=10
+SomeDouble=1.3" + Global.NL;
 
             Assert.AreEqual(expected, actual);
         }
@@ -141,13 +141,13 @@ SomeDouble =1.3" + Global.NL;
 
             var actualA = configA.ToString();
             var expectedA = @"[SectionA]
-SomeString =#'A'" + Global.NL;
+SomeString=#'A'" + Global.NL;
 
             Assert.AreEqual(expectedA, actualA);
 
             var actualB = configB.ToString();
             var expectedB = @"[SectionB]
-SomeString =#'B'" + Global.NL;
+SomeString=#'B'" + Global.NL;
 
             Assert.AreEqual(expectedB, actualB);
         }
@@ -161,11 +161,11 @@ SomeString =#'B'" + Global.NL;
             config.ReadValueFrom("C", "Section1.Subsection1", "SomeString");
 
             var actual = config.ToString();
-            var expected = @"SomeString =#'A'
+            var expected = @"SomeString=#'A'
 [Section1]
-SomeString =#'B'
+SomeString=#'B'
 [Section1.Subsection1]
-SomeString =#'C'
+SomeString=#'C'
 ";
 
             Assert.AreEqual(expected, actual);
@@ -183,11 +183,11 @@ SomeString =#'C'
             b.Value = "NewB";
 
             var actual = config.ToString();
-            var expected = @"SomeString =#'NewA'
+            var expected = @"SomeString=#'NewA'
 [Section1]
-SomeString =#'NewB'
+SomeString=#'NewB'
 [Section1.Subsection1]
-SomeString =#'NewC'
+SomeString=#'NewC'
 ";
 
             Assert.AreEqual(expected, actual);
@@ -205,11 +205,11 @@ SomeString =#'NewC'
 
             config = Configurable.CreateConfig("ReadFromSubsectionOfNotEmptyConfig");
             var actual = config.ToString();
-            var expected = @"SomeString =#'A'
+            var expected = @"SomeString=#'A'
 [Section1]
-SomeString =#'B'
+SomeString=#'B'
 [Section1.Subsection1]
-SomeString =#'C'
+SomeString=#'C'
 ";
 
             Assert.AreEqual(expected, actual);
@@ -226,8 +226,8 @@ SomeString =#'C'
             config.ReadValue(1.3, "SomeDouble");
 
             var actual = config.ToString();
-            var expected = @"SomeInt32 =10
-SomeDouble =1.3" + Global.NL;
+            var expected = @"SomeInt32=10
+SomeDouble=1.3" + Global.NL;
 
             Assert.AreEqual(expected, actual);
         }
@@ -240,8 +240,8 @@ SomeDouble =1.3" + Global.NL;
             config.ReadValue(1.3, "SomeDouble");
 
             var actual = config.ToString();
-            var expected = @"SomeInt32 =10\\Hello!
-SomeDouble =1.3" + Global.NL;
+            var expected = @"SomeInt32=10\\Hello!
+SomeDouble=1.3" + Global.NL;
 
             Assert.AreEqual(expected, actual);
             Assert.AreEqual("Hello!", accessor.Commentary);
@@ -255,8 +255,8 @@ SomeDouble =1.3" + Global.NL;
             config.ReadValue(1.3e2, "SomeDouble");
 
             var actual = config.ToString();
-            var expected = @"SomeInt32 =-1\\First line - second
-SomeDouble =130" + Global.NL;
+            var expected = @"SomeInt32=-1\\First line - second
+SomeDouble=130" + Global.NL;
 
             Assert.AreEqual(expected, actual);
             Assert.AreEqual($"First line - {Global.NL}second", accessor.Commentary);
@@ -271,9 +271,9 @@ SomeDouble =130" + Global.NL;
             config.ReadValue(new double[] { }, "SomeEmptyDoubleArr");
 
             var actual = config.ToString();
-            var expected = @"SomeInt32 =10
-SomeDoubleArr =-1 2 2.345
-SomeEmptyDoubleArr =" + Global.NL;
+            var expected = @"SomeInt32=10
+SomeDoubleArr=-1 2 2.345
+SomeEmptyDoubleArr=" + Global.NL;
 
             Assert.AreEqual(expected, actual);
         }
@@ -321,18 +321,18 @@ SomeEmptyDoubleArr =" + Global.NL;
             config.ReadValue("Hello", "SomeString");
 
             var actual1 = config.ToString();
-            var expected1 = @"SomeUInt8 =3
-SomeInt32Arr =1 2 3\\Hello!
-SomeString =#'Hello'" + Global.NL;
+            var expected1 = @"SomeUInt8=3
+SomeInt32Arr=1 2 3\\Hello!
+SomeString=#'Hello'" + Global.NL;
 
             Assert.AreEqual(expected1, actual1);
             Assert.AreEqual("Hello!", accessor.Commentary);
 
             accessor.SetComment("It is int[]");
             var actual2 = config.ToString();
-            var expected2 = @"SomeUInt8 =3
-SomeInt32Arr =1 2 3\\It is int[]
-SomeString =#'Hello'" + Global.NL;
+            var expected2 = @"SomeUInt8=3
+SomeInt32Arr=1 2 3\\It is int[]
+SomeString=#'Hello'" + Global.NL;
 
             Assert.AreEqual(expected2, actual2);
             Assert.AreEqual("It is int[]", accessor.Commentary);
@@ -347,18 +347,18 @@ SomeString =#'Hello'" + Global.NL;
             var accessor = config.ReadValue("Hello", "SomeString").SetComment("Hello!");
 
             var actual1 = config.ToString();
-            var expected1 = @"SomeUInt8 =3\\Hi!
-SomeInt32Arr =1 2 3
-SomeString =#'Hello'\\Hello!" + Global.NL;
+            var expected1 = @"SomeUInt8=3\\Hi!
+SomeInt32Arr=1 2 3
+SomeString=#'Hello'\\Hello!" + Global.NL;
 
             Assert.AreEqual(expected1, actual1);
             Assert.AreEqual("Hello!", accessor.Commentary);
 
             accessor.SetComment(null);
             var actual2 = config.ToString();
-            var expected2 = @"SomeUInt8 =3\\Hi!
-SomeInt32Arr =1 2 3
-SomeString =#'Hello'" + Global.NL;
+            var expected2 = @"SomeUInt8=3\\Hi!
+SomeInt32Arr=1 2 3
+SomeString=#'Hello'" + Global.NL;
 
             Assert.AreEqual(expected2, actual2);
             Assert.AreEqual(null, accessor.Commentary);
@@ -390,8 +390,8 @@ SomeString =#'Hello'" + Global.NL;
 
             {
                 var actual1 = config.ToString();
-                var expected1 = @"EnumArr =A B C
-Enum =B" + Global.NL;
+                var expected1 = @"EnumArr=A B C
+Enum=B" + Global.NL;
 
                 Assert.AreEqual(expected1, actual1);
             }
@@ -403,8 +403,8 @@ Enum =B" + Global.NL;
                 accessor2.Commentary = "it is single value";
 
                 var actual2 = config.ToString();
-                var expected2 = @"EnumArr =A C C\\it is array
-Enum =C\\it is single value" + Global.NL;
+                var expected2 = @"EnumArr=A C C\\it is array
+Enum=C\\it is single value" + Global.NL;
 
                 Assert.AreEqual(expected2, actual2);
             }
@@ -485,8 +485,8 @@ Enum =C\\it is single value" + Global.NL;
             config.ReadValue(new V2(-9, 9), "SomeV2");
 
             var actual = config.ToString();
-            var expected = @"SomeInt32 =10
-SomeV2 =X:-9 Y:9
+            var expected = @"SomeInt32=10
+SomeV2=X:-9 Y:9
 ";
 
             Assert.AreEqual(expected, actual);
@@ -500,7 +500,7 @@ SomeV2 =X:-9 Y:9
             config.ReadValue(10, "SomeInt32");
 
             var actual = config.ToString();
-            var expected = @"SomeInt32 =DEC: 10
+            var expected = @"SomeInt32=DEC: 10
 ";
 
             Assert.AreEqual(expected, actual);
