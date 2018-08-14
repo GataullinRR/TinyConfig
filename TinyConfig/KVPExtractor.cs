@@ -69,7 +69,7 @@ namespace TinyConfig
 
                         bool isOneLineKVP()
                         {
-                            return !line.Contains(Constants.MULTILUNE_VALUE_MARK) || !line.Contains(Constants.BLOCK_MARK);
+                            return !line.Contains(Constants.MULTILINE_VALUE_MARK) || !line.Contains(Constants.BLOCK_MARK);
                         }
                     }
                 }
