@@ -52,8 +52,34 @@ namespace TinyConfig
 
         public static IEnumerable<SectionInfo> GetSections(string[] iniFile)
         {
-            return getSectionsWithoutChecking(iniFile)
+            var sections = getSectionsWithoutChecking(iniFile)
                 .Distinct((si1, si2) => si1.Section.Equals(si2.Section));
+            int index = 0;
+            var sectionNames = new List<Section>();
+            foreach (var s in sections)
+            {
+                if (validate(s.Section))
+                {
+                    yield return s;
+                    sectionNames.Add(s.Section);
+                    index++;
+                }
+            };
+
+            /////////////////////////////////////
+
+            bool validate(Section header)
+            {
+                for (int i = index - 1; i >= 0; i--)
+                {
+                    var curr = sectionNames[i];
+                    if (curr.Order == header.Order - 1)
+                    {
+                        return header.IsInsideSection(curr); // have parrent
+                    }
+                }
+                return header.IsRoot; // root can not have a parent
+            }
         }
         static IEnumerable<SectionInfo> getSectionsWithoutChecking(string[] iniFile)
         {

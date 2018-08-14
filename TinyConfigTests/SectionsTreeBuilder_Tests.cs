@@ -96,9 +96,7 @@ namespace TinyConfig.Tests
             };
 
             var tree = new SectionsTreeBuilder().BuildTree(SectionsFinder.GetSections(data.Split(Global.NL)).ToArray());
-            var level1Childs = tree.Children.Select(c => c.Section.FullName);
 
-            Assert.AreEqual(new[] { "S1", "S2", "S3" }, level1Childs);
             Assert.AreEqual(expectedAllChildren, tree.AllChildren);
         }
     }
