@@ -15,7 +15,7 @@ namespace TinyConfig.Tests
     public class KVPExtractor_Tests
     {
         [Test()]
-        public void ExtractAll_OneLineKVPsOnlyTest()
+        public void ExtractAll_OneLineKVPsOnly()
         {
             var data = @"KEY1 =Value
 fff=2";
@@ -31,7 +31,7 @@ fff=2";
         }
 
         [Test()]
-        public void ExtractAll_MultilineKVPsOnlyTest()
+        public void ExtractAll_MultilineKVPsOnly()
         {
             var data = @"KEY1 = #'Value ''line1''
 line2
@@ -51,7 +51,7 @@ KEY3=#'''Hel''''lo '''''";
         }
 
         [Test()]
-        public void ExtractAll_MixedKVPsTest()
+        public void ExtractAll_MixedKVPs()
         {
             var data = @"KEY1 = Value
 KEY2= # 'Hello ''friend''!'
@@ -69,7 +69,7 @@ KEY3= eeHel''''lo";
         }
 
         [Test()]
-        public void ExtractAll_MixedKVPsAndCommentaryTest1()
+        public void ExtractAll_MixedKVPsAndCommentary1()
         {
             var data = @"SomeUInt8 =3
 SomeInt32Arr =1 2 3\\It is int[]
@@ -88,7 +88,7 @@ SomeString =#'Hello'
         }
 
         [Test()]
-        public void ExtractAll_MixedKVPsAndCommentaryTest2()
+        public void ExtractAll_MixedKVPsAndCommentary2()
         {
             var data = @"KEY1 = Value \\comment1
 KEY2= # 'Hello ''friend''!' \\ comment2 
@@ -98,7 +98,7 @@ KEY4=123";
             var actual = KVPExtractor.ExtractAll(new StreamReader(new MemoryStream(data.GetBytes(Encoding.UTF8))));
             var expected = new[]
             {
-                new ConfigKVP ("KEY1", new ConfigValue(" Value ", false), "comment1"),
+                new ConfigKVP("KEY1", new ConfigValue(" Value ", false), "comment1"),
                 new ConfigKVP("KEY2", new ConfigValue("Hello 'friend'!", true), " comment2 "),
                 new ConfigKVP("KEY3", new ConfigValue(" eeHel''''lo", false), null),
                 new ConfigKVP("KEY4", new ConfigValue("123", false), null),
@@ -108,7 +108,7 @@ KEY4=123";
         }
 
         [Test()]
-        public void ExtractAll_CommentaryInValueTest()
+        public void ExtractAll_CommentaryInValue()
         {
             var data = @"KEY1 =# 'Value \\bad comment' \\good comment1
 KEY2= # '\\bad commentHello ''friend''!' \\ good comment2
@@ -126,7 +126,7 @@ KEY3=(value begin)\\bad comment(value end) \\ good comment3";
         }
 
         [Test()]
-        public void ExtractAll_SectionsTest()
+        public void ExtractAll_Sections()
         {
             var data = @"SomeUInt8 =3
 [Section1]SomeInt32Arr =1 2 3\\It is int[]
@@ -150,7 +150,7 @@ SomeVal2 =2
         }
 
         [Test()]
-        public void ExtractAll_IncorrectSectionsTest()
+        public void ExtractAll_IncorrectSections()
         {
             var data = @"SomeVal1 =1
 [S ection]
@@ -177,7 +177,7 @@ SomeVal5 =5
         }
 
         [Test()]
-        public void ExtractAll_SectionInSectionTest()
+        public void ExtractAll_SectionInSection()
         {
             var data = @"SomeUInt8 =3
 [Section1]
@@ -204,7 +204,7 @@ SomeVal2 =2
         }
 
         [Test()]
-        public void ExtractAll_IgnoreRepeatingSectionsTest()
+        public void ExtractAll_IgnoreRepeatingSections()
         {
             var data = @"[Section1]
 SomeUInt8 =3

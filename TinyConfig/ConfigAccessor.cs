@@ -21,7 +21,7 @@ namespace TinyConfig
         }
 
         readonly ConfigReaderWriter _config;
-        readonly HashSet<string> _proxyKeys = new HashSet<string>();
+        readonly HashSet<string> _proxyPaths = new HashSet<string>();
         readonly Dictionary<MarshallerType, List<TypeMarshaller>> _marshallers
             = new Dictionary<MarshallerType, List<TypeMarshaller>>()
             {
@@ -101,7 +101,8 @@ namespace TinyConfig
         }
         public ConfigProxy<T> ReadValueFrom<T>(T fallbackValue, string subsection, [CallerMemberName]string key = "")
         {
-            if (_proxyKeys.Contains(key))
+            var path = $".{subsection}.{key}";
+            if (_proxyPaths.Contains(path))
             {
                 throw new InvalidOperationException("Значение с данным ключем уже было прочитано");
             }
@@ -146,7 +147,7 @@ namespace TinyConfig
                 tryAppendKVP();
             }
 
-            _proxyKeys.Add(key);
+            _proxyPaths.Add(path);
             ConfigProxy<T> proxy = null;
             proxy = new ConfigProxy<T>(readValue, readCommentary, tryUpdateValueInConfigFile, tryUpdateCommentaryInConfigFile);
             return proxy;
@@ -168,7 +169,7 @@ namespace TinyConfig
                 if (isOk)
                 {
                     commentary = commentary?.Replace(Global.NL, "");
-                    return new ConfigKVP(_config.RootSection, key, packedValue, commentary);
+                    return new ConfigKVP(section, key, packedValue, commentary);
                 }
                 else
                 {

@@ -68,7 +68,7 @@ namespace TinyConfig
 
             readonly Stream _baseStream;
             bool _isBaseStreamClosed;
-            readonly SectionsFinder.SectionInfo[] _sections;
+            readonly SectionsTreeBuilder.RootSection _sections;
             readonly List<StreamInfo> _sectionStreams = new List<StreamInfo>();
 
             public StreamAggregator(Stream baseStream)
@@ -76,27 +76,31 @@ namespace TinyConfig
                 _baseStream = baseStream;
 
                 var lines = new StreamReader(_baseStream).ReadAllLines().ToArray();
-                var sections = SectionsFinder.GetSections(lines);
-                _sections = sections.ToArray();
+                _sections = SectionsTreeBuilder.BuildTree(SectionsFinder.GetSections(lines));
             }
 
+            /// <summary>
+            /// Возвращает поток с данными из указанной секции и всех ее дочерних секций
+            /// </summary>
+            /// <param name="sectionName"></param>
+            /// <returns></returns>
             public Stream CreateStream(string sectionName)
             {
                 throwIfDisposed();
-
-                var sectionIndex = _sections.Find(s => s.Section.FullName == sectionName);
-                var section = sectionIndex >= 0 ? _sections[sectionIndex] : null;
 
                 if (_sectionStreams.Any(si => si.SectionName == sectionName))
                 {
                     throw new InvalidOperationException();
                 }
 
+                var tmp = _sections.AllChildren.Find(s => s.Section.FullName == sectionName);
+                var sectionIndex = tmp.Index;
+                var section = tmp.ValueOrDefault;
                 NotifiableStream stream = null;
                 if (section == null)
                 {
                     stream = new NotifiableStream(new MemoryStream());
-                    sectionIndex = Math.Max(_sections.Length - 1, _sectionStreams.EmptyToNull()?.Max(s => s.PositionInBase) ?? 0);
+                    sectionIndex = Math.Max(_sections.AllChildren.Count() - 1, _sectionStreams.EmptyToNull()?.Max(s => s.PositionInBase) ?? 0);
                 }
                 else
                 {
@@ -112,7 +116,7 @@ namespace TinyConfig
                 {
                     var ms = new MemoryStream();
                     var sw = new StreamWriter(ms);
-                    sw.WriteLines(section.FullSection);
+                    sw.WriteLines(section.Lines);
                     sw.Flush();
                     ms.Position = 0;
 

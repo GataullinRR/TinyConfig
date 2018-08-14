@@ -130,7 +130,7 @@ namespace TinyConfig
                 if (isBlockClosed)
                 {
                     var commentBlockStart = line
-                        .FindAll(Constants.COMMENT_SEPARATOR)
+                        .FindAllIndexes(Constants.COMMENT_SEPARATOR)
                         .Where(i => i > valueBlockEnd)
                         .FirstOrDefault(-1);
                     if (commentBlockStart >= 0)

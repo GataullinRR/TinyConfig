@@ -15,7 +15,7 @@ namespace TinyConfig.Tests
     public class TypeMarshaller_Tests
     {
         [Test()]
-        public void TryPack_ArrayTest()
+        public void TryPack_Array()
         {
             var m = new DoubleMarshaller();
             m.TryPack(new double[] { -1, 2, 3.4, 4.59, 0 },  out ConfigValue result);
@@ -27,7 +27,7 @@ namespace TinyConfig.Tests
         }
 
         [Test()]
-        public void TryPackString_ArrayTest()
+        public void TryPackString_Array()
         {
             var m = new StringMarshaller();
             Assert.Throws<ArrayPackingNotSupportedException>(() => m.TryPack(new string[] { "one", "two!" }, out ConfigValue result));

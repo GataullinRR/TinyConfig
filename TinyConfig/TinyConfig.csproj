@@ -65,6 +65,8 @@
     <Compile Include="ConfigValue.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="KVPExtractor.cs" />
+    <Compile Include="Logging\ILogger.cs" />
+    <Compile Include="Logging\LogFactory.cs" />
     <Compile Include="Marshallers\Base\ArrayPackingNotSupportedException.cs" />
     <Compile Include="Marshallers\Base\ExactTypeMarshaller.cs" />
     <Compile Include="Marshallers\Base\SpaceArraySeparatorTypeMarshaller.cs" />
@@ -86,6 +88,7 @@
     <Compile Include="Marshallers\Base\TypeMarshaller.cs" />
     <Compile Include="Section.cs" />
     <Compile Include="SectionsFinder.cs" />
+    <Compile Include="SectionsTreeBuilder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -95,7 +98,7 @@
       <Project>{E8AC16FB-B9CE-4FD7-8B1F-871101DE11FD}</Project>
       <Name>MVVMUtilities</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\GeneralPurposeLibs\Utilities\Utilities.csproj">
+    <ProjectReference Include="..\..\GeneralPurposeLibs\Utilities\Utilities\Utilities.csproj">
       <Project>{b76d158d-0ad4-4656-848b-2b33e2684e08}</Project>
       <Name>Utilities</Name>
     </ProjectReference>

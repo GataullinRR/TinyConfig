@@ -44,8 +44,12 @@ namespace TinyConfig
             var writer = new StreamWriter(_file, _encoding);
             foreach (var group in sections)
             {
-                if (group.Section.FullName != RootSection.FullName
-                    && group.Section.IsInsideSection(RootSection.FullName))
+                //if (group.Section.FullName != RootSection.FullName
+                //    && group.Section.IsInsideSection(RootSection.FullName))
+                //{
+                //    throw new InvalidOperationException();
+                //}
+                if (!group.Section.IsInsideSection(RootSection.FullName))
                 {
                     throw new InvalidOperationException();
                 }
