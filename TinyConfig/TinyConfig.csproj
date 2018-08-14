@@ -88,7 +88,7 @@
     <Compile Include="Marshallers\Base\TypeMarshaller.cs" />
     <Compile Include="Section.cs" />
     <Compile Include="SectionsFinder.cs" />
-    <Compile Include="SectionsIerarchyBuilder.cs" />
+    <Compile Include="SectionsTreeBuilder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

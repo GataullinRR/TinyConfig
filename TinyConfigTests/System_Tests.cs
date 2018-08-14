@@ -213,9 +213,9 @@ SomeString =#'C'
 ";
 
             Assert.AreEqual(expected, actual);
-            Assert.AreEqual("A", config.ReadValueFrom("", null, "SomeString"));
-            Assert.AreEqual("B", config.ReadValueFrom("", "Section1", "SomeString"));
-            Assert.AreEqual("C", config.ReadValueFrom("", "Section1.Subsection1", "SomeString"));
+            Assert.AreEqual("A", config.ReadValueFrom("", null, "SomeString").Value);
+            Assert.AreEqual("B", config.ReadValueFrom("", "Section1", "SomeString").Value);
+            Assert.AreEqual("C", config.ReadValueFrom("", "Section1.Subsection1", "SomeString").Value);
         }
 
         [Test()]

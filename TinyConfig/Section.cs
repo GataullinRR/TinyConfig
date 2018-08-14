@@ -34,7 +34,7 @@ namespace TinyConfig
         public Section(string fullName)
         {
             FullName = fullName;
-            Order = FullName?.FindAll(Constants.SUBSECTION_SEPARATOR)?.Count + 1 ?? 0;
+            Order = FullName?.FindAll(Constants.SUBSECTION_SEPARATOR)?.Count() + 1 ?? 0;
             IsRoot = FullName == null;
             IsCorrect = FullName == null
                 || !FullName.EndsWith(Constants.SUBSECTION_SEPARATOR)

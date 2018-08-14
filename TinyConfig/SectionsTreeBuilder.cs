@@ -9,18 +9,25 @@ using Utilities.Extensions;
 
 namespace TinyConfig
 {
-    class SectionsTreeBuilder
+    static class SectionsTreeBuilder
     {
         public class RootSection : IEquatable<RootSection>, IEqualityComparer<RootSection>
         {
-            public Section Section;
-            public IEnumerable<RootSection> Children;
-            public IEnumerable<string> Lines;
+            public static RootSection EmptyRoot = new RootSection(Section.RootSection, Enumerable.Empty<RootSection>(), Enumerable.Empty<string>());
 
+            public Section Section { get; }
+            public IEnumerable<RootSection> Children { get; }
+            public IEnumerable<string> Lines { get; }
+
+            /// <summary>
+            /// Performs enumeration in order, in which sections follow in config. 
+            /// Includes this (so returns sequence contains at least 1 element).
+            /// </summary>
             public IEnumerable<RootSection> AllChildren
             {
                 get
                 {
+                    yield return this;
                     foreach (var child in getAllChildren(this))
                     {
                         yield return child;
@@ -40,6 +47,13 @@ namespace TinyConfig
                         }
                     }
                 }
+            }
+
+            public RootSection(Section section, IEnumerable<RootSection> children, IEnumerable<string> lines)
+            {
+                Section = section ?? throw new ArgumentNullException(nameof(section));
+                Children = children ?? throw new ArgumentNullException(nameof(children));
+                Lines = lines ?? throw new ArgumentNullException(nameof(lines));
             }
 
             public bool Equals(RootSection other)
@@ -74,14 +88,15 @@ namespace TinyConfig
         /// </summary>
         /// <param name="allSections">Sections with correct hierarchy</param>
         /// <returns></returns>
-        public RootSection BuildTree(SectionsFinder.SectionInfo[] allSections)
+        public static RootSection BuildTree(IEnumerable<SectionsFinder.SectionInfo> allSections)
         {
             var sections = allSections
                 .Select(s => new { Section = s.Section, Lines = s.FullSection })
                 .ToList();
-
-            var dipestOrder = sections.Max(s => s.Section.Order);
-            return getRoot(0);
+            var dipestOrder = sections.EmptyToNull()?.Max(s => s.Section.Order) ?? -1;
+            return dipestOrder != -1 
+                ? getRoot(0) 
+                : RootSection.EmptyRoot;
 
             /////////////////////////////////////////
 
@@ -103,24 +118,14 @@ namespace TinyConfig
                         }
                         else // leaf
                         {
-                            child = new RootSection()
-                            {
-                                Children = Enumerable.Empty<RootSection>(),
-                                Lines = curr.Lines,
-                                Section = curr.Section
-                            };
+                            child = new RootSection(curr.Section, Enumerable.Empty<RootSection>(), curr.Lines);
                         }
                         lines = lines.Concat(child.Lines);
                         children.Add(child);
                     }
                 }
 
-                return new RootSection()
-                {
-                    Children = children,
-                    Lines = lines,
-                    Section = header.Section
-                };
+                return new RootSection(header.Section, children, lines);
             }
         }
     }
