@@ -196,7 +196,7 @@ SomeString=#'NewC'
         [Test()]
         public void ReadFromSubsectionOfNotEmptyConfig()
         {
-            var config = Configurable.CreateConfig("ReadFromSubsectionOfNotEmptyConfig").Clear();
+            IConfigAccessor config = Configurable.CreateConfig("ReadFromSubsectionOfNotEmptyConfig").Clear();
             config.ReadValueFrom("A", null, "SomeString");
             config.ReadValueFrom("B", "Section1", "SomeString");
             config.ReadValueFrom("C", "Section1.Subsection1", "SomeString");
@@ -221,7 +221,7 @@ SomeString=#'C'
         [Test()]
         public void WriteValue()
         {
-            var config = Configurable.CreateConfig("WriteValue", "SomeDir").Clear();
+            IConfigAccessor config = Configurable.CreateConfig("WriteValue", "SomeDir").Clear();
             config.ReadValue(10, "SomeInt32");
             config.ReadValue(1.3, "SomeDouble");
 
@@ -517,7 +517,7 @@ SomeV2=X:-9 Y:9
         [Test()]
         public void ReadFromNotEmptyConfig()
         {
-            var config = Configurable.CreateConfig("ReadFromNotEmptyConfig").Clear();
+            IConfigAccessor config = Configurable.CreateConfig("ReadFromNotEmptyConfig").Clear();
             config.ReadValue("1", "Key1");
             config.ReadValue("2", "Key2");
             config.Close();
@@ -531,7 +531,7 @@ SomeV2=X:-9 Y:9
         [Test()]
         public void ReadAfterClose()
         {
-            var config = Configurable.CreateConfig("ReadAfterClose").Clear();
+            IConfigAccessor config = Configurable.CreateConfig("ReadAfterClose").Clear();
             var written = config.ReadValue("1", "Key1");
             config.Close();
             Configurable.ReleaseFile(config.SourceInfo.FilePath);

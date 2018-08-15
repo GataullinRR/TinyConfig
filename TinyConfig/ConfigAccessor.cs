@@ -12,7 +12,7 @@ using Utilities.Types;
 
 namespace TinyConfig
 {
-    public class ConfigAccessor
+    public class ConfigAccessor : IConfigAccessor
     {
         enum MarshallerType
         {
@@ -22,12 +22,12 @@ namespace TinyConfig
 
         readonly ConfigReaderWriter _config;
         readonly HashSet<string> _proxyPaths = new HashSet<string>();
-        readonly Dictionary<MarshallerType, List<TypeMarshaller>> _marshallers
-            = new Dictionary<MarshallerType, List<TypeMarshaller>>()
+        readonly Dictionary<MarshallerType, List<ValueMarshaller>> _marshallers
+            = new Dictionary<MarshallerType, List<ValueMarshaller>>()
             {
                 {
                     MarshallerType.EXACT,
-                    new List<TypeMarshaller>()
+                    new List<ValueMarshaller>()
                     {
                         new BooleanMarshaller(),
                         new SByteMarshaller(),
@@ -46,7 +46,7 @@ namespace TinyConfig
                 },
                 {
                     MarshallerType.MULTIPLE,
-                    new List<TypeMarshaller>()
+                    new List<ValueMarshaller>()
                     {
                         new EnumMarshaller()
                     }
@@ -81,7 +81,7 @@ namespace TinyConfig
         }
 
         public ConfigAccessor AddMarshaller<T>() 
-            where T : TypeMarshaller, new()
+            where T : ValueMarshaller, new()
         {
             if (typeof(ExactTypeMarshaller).IsAssignableFrom(typeof(T)))
             {

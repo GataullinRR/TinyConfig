@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using Utilities;
 using Utilities.Extensions;
@@ -8,19 +10,98 @@ using Utilities.Types;
 
 namespace TinyConfig
 {
-    public abstract class TypeMarshaller
+    public abstract class ObjectMarshaller
+    {
+        readonly Func<Type, bool> _isTypeSupportedTester;
+
+        public ObjectMarshaller(Func<Type, bool> isTypeSupportedTester)
+        {
+            _isTypeSupportedTester = isTypeSupportedTester;
+        }
+
+        internal protected abstract bool TryPack(IConfigAccessorProxy configAccessor, object value);
+        internal protected abstract bool TryUnpack(IConfigAccessorProxy configAccessor, Type supposedType, out object result);
+
+        internal bool IsTypeSupported(Type type)
+        {
+            return _isTypeSupportedTester(type);
+        }
+    }
+
+    public class StructObjectMarshaller : ObjectMarshaller
+    {
+        public StructObjectMarshaller() 
+            : base(t => (t.Attributes & TypeAttributes.Serializable) != 0 && t.IsValueType)
+        {
+
+        }
+
+        internal protected override bool TryPack(IConfigAccessorProxy configAccessor, object value)
+        {
+            return pack();
+
+            bool pack()
+            {
+                var t = value.GetType();
+                foreach (var field in getFields(t))
+                {
+                    var v = field.GetValue(value);
+                    var hasMarshaller = configAccessor.HasValueMarshaller(field.FieldType);
+                    if (hasMarshaller)
+                    {
+                        configAccessor.WriteValue(v, field.Name);
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        }
+
+        internal protected override bool TryUnpack(IConfigAccessorProxy configAccessor, Type supposedType, out object result)
+        {
+            result = Activator.CreateInstance(supposedType);
+
+            foreach (var field in getFields(supposedType))
+            {
+                var hasMarshaller = configAccessor.HasValueMarshaller(field.FieldType);
+                if (hasMarshaller)
+                {
+                    var value = configAccessor.ReadValue(field.FieldType, field.Name);
+                    field.SetValue(result, value.Value);
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        IEnumerable<FieldInfo> getFields(Type t)
+        {
+            var filter = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+            return t.GetFields(filter);
+        }
+    }
+
+    public abstract class ValueMarshaller
     {
         readonly Func<Type, bool> _isTypeSupportedTester;
 
         protected bool IsAlwaysMultiline { get; }
         protected string ArraySeparator { get; }
 
-        public TypeMarshaller(Func<Type, bool> isTypeSupportedTester)
+        public ValueMarshaller(Func<Type, bool> isTypeSupportedTester)
             : this(isTypeSupportedTester, false, null)
         {
 
         }
-        public TypeMarshaller(Func<Type, bool> isTypeSupportedTester, bool isAlwaysMultiline, string arraySeparator)
+        public ValueMarshaller(Func<Type, bool> isTypeSupportedTester, bool isAlwaysMultiline, string arraySeparator)
         {
             _isTypeSupportedTester = isTypeSupportedTester ?? throw new ArgumentNullException();
             IsAlwaysMultiline = isAlwaysMultiline;

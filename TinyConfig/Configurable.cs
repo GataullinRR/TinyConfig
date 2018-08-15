@@ -36,36 +36,36 @@ namespace TinyConfig
             }
         }
 
-        public static ConfigAccessor CreateConfig(Type owner)
+        public static IConfigAccessor CreateConfig(Type owner)
         {
             return CreateConfig(owner.FullName);
         }
-        public static ConfigAccessor CreateConfig(string configFileName)
+        public static IConfigAccessor CreateConfig(string configFileName)
         {
             return CreateConfig(configFileName, "");
         }
-        public static ConfigAccessor CreateConfig(string configFileName, string relativeDirPath)
+        public static IConfigAccessor CreateConfig(string configFileName, string relativeDirPath)
         {
             return CreateConfig(configFileName, relativeDirPath, DEFAUL_ENCODING);
         }
-        public static ConfigAccessor CreateConfig(string configFileName, string relativeDirPath, string section)
+        public static IConfigAccessor CreateConfig(string configFileName, string relativeDirPath, string section)
         {
             return CreateConfig(configFileName, relativeDirPath, DEFAUL_ENCODING, DEFAULT_CONFIG_ACCESS, section);
         }
-        public static ConfigAccessor CreateConfig(string configFileName, string relativeDirPath, Encoding encoding)
+        public static IConfigAccessor CreateConfig(string configFileName, string relativeDirPath, Encoding encoding)
         {
             return CreateConfig(configFileName, relativeDirPath, encoding, DEFAULT_CONFIG_ACCESS);
         }
-        public static ConfigAccessor CreateConfig(string configFileName, string relativeDirPath, ConfigAccess access)
+        public static IConfigAccessor CreateConfig(string configFileName, string relativeDirPath, ConfigAccess access)
         {
             return CreateConfig(configFileName, relativeDirPath, DEFAUL_ENCODING, access);
         }
-        public static ConfigAccessor CreateConfig
+        public static IConfigAccessor CreateConfig
             (string configFileName, string relativeDirPath, Encoding encoding, ConfigAccess access)
         {
             return CreateConfig(configFileName, relativeDirPath, encoding, access, null);
         }
-        public static ConfigAccessor CreateConfig
+        public static IConfigAccessor CreateConfig
             (string configFileName, string relativeDirPath, Encoding encoding, ConfigAccess access, string section)
         {
             var configPath = Path
@@ -91,11 +91,11 @@ namespace TinyConfig
                 new ConfigSourceInfo(true, configPath));
         }
 
-        public static ConfigAccessor CreateConfig(Stream configStream)
+        public static IConfigAccessor CreateConfig(Stream configStream)
         {
             return CreateConfig(configStream, null, DEFAUL_ENCODING);
         }
-        public static ConfigAccessor CreateConfig(Stream configStream, string section, Encoding encoding)
+        public static IConfigAccessor CreateConfig(Stream configStream, string section, Encoding encoding)
         {
             var config = new ConfigStorageProxy(configStream);
             _openedFiles.Add(config);
