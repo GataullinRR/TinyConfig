@@ -49,7 +49,7 @@ namespace TinyConfig
                             : null;
                         var isKeyCorrect = canHaveKey 
                             && supposedKey.IsNotEmpty() 
-                            && supposedKey.All(c => char.IsLetterOrDigit(c)) 
+                            && supposedKey.All(c => char.IsLetterOrDigit(c) || c == '_') 
                             && !char.IsDigit(supposedKey.First());
 
                         return isKeyCorrect 
