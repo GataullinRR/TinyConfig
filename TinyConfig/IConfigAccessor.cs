@@ -5,11 +5,11 @@ namespace TinyConfig
 {
     public interface IConfigAccessorProxy
     {
-        ConfigProxy<T> ReadValue<T>([CallerMemberName]string key = "");
-        ConfigProxy<object> ReadValue(Type supposedType, [CallerMemberName]string key = "");
-        ConfigProxy<T> ReadValueFrom<T>(string subsection, [CallerMemberName]string key = "");
-        bool WriteValue<T>(T value, [CallerMemberName]string key = "");
-        bool WriteValueFrom<T>(T value, string subsection, [CallerMemberName]string key = "");
+        ConfigProxy<T> ReadValue<T>(string key);
+        ConfigProxy<object> ReadValue(Type supposedType, string key);
+        ConfigProxy<T> ReadValueFrom<T>(string subsection, string key);
+        bool WriteValue<T>(T value, string key);
+        bool WriteValueFrom<T>(T value, string subsection, string key);
         bool HasValueMarshaller(Type type);
     }
 

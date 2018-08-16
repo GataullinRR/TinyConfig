@@ -35,10 +35,13 @@ namespace TinyConfig
             set => _commentaryUpdater(_Commentary = value);
         }
 
-        internal ConfigProxy(T value, string commentary, Action<T> valueUpdater, Action<string> commentaryUpdater)
+        public bool IsRead { get; }
+
+        internal ConfigProxy(T value, string commentary, bool isRead, Action<T> valueUpdater, Action<string> commentaryUpdater)
         {
             _Value = value;
             _Commentary = commentary;
+            IsRead = isRead;
             _valueUpdater = valueUpdater;
             _commentaryUpdater = commentaryUpdater;
         }

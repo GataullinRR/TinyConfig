@@ -28,9 +28,9 @@ namespace TinyConfig
         }
     }
 
-    public class StructObjectMarshaller : ObjectMarshaller
+    public class FlatStructObjectMarshaller : ObjectMarshaller
     {
-        public StructObjectMarshaller() 
+        public FlatStructObjectMarshaller() 
             : base(t => (t.Attributes & TypeAttributes.Serializable) != 0 && t.IsValueType)
         {
 

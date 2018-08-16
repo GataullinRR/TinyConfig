@@ -57,6 +57,7 @@
     <Compile Include="System_Tests.cs" />
     <Compile Include="KVPExtractor_Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ObjectMarshaller_Tests.cs" />
     <Compile Include="TypeMarshaller_Tests.cs" />
     <Compile Include="SectionsFinder_Tests.cs" />
   </ItemGroup>
