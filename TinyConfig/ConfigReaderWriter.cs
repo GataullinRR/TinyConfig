@@ -35,7 +35,7 @@ namespace TinyConfig
 
         void Config_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            var sections = from g in KVPs.GroupBy(v => v.Section, v=> v, new IEqualityComparerAction<Section>((a, b) => a.Equals(b)))
+            var sections = from g in KVPs.Group(v => v.Section, (a, b) => a.Equals(b))
                            orderby g.Key.Order
                            orderby g.Key.FullName
                            select new { Section = g.Key, Body = g.ToArray() };
@@ -70,15 +70,19 @@ namespace TinyConfig
 
         public override string ToString()
         {
+            var EMPTY = "" + Global.NL;
+
             _file.Position = 0;
             if (_file.Length == 0)
             {
-                return "" + Global.NL;
+                return EMPTY;
             }
             else
             {
-                return new StreamReader(_file, _encoding).ReadAllLines()
-                    .Aggregate((acc, line) => acc + Global.NL + line) + Global.NL;
+                var lines = new StreamReader(_file, _encoding).ReadAllLines().ToArray();
+                return lines.IsEmpty() 
+                    ? EMPTY
+                    : (lines.Aggregate((acc, line) => acc + Global.NL + line) + Global.NL);
             }
         }
     }

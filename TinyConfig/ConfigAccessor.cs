@@ -31,14 +31,7 @@ namespace TinyConfig
 
         public ConfigProxy<object> ReadValue(Type supposedType, string key)
         {
-            var typed = typeof(ConfigAccessor)
-                .GetMethod(nameof(ConfigAccessor.ReadValueFrom))
-                .MakeGenericMethod(supposedType)
-                .Invoke(_configAccessor, new object[] { supposedType.GetDefaultValue(), _subsection, key });
-            var value = (ConfigProxy<object>)((dynamic)typed).CastToRoot();
-            _readValues.Add(key, value);
-
-            return value;
+            return readValue(supposedType, supposedType.GetDefaultValue(), key);
         }
 
         public bool WriteValue(Type valueType, object value, string key)
@@ -48,7 +41,19 @@ namespace TinyConfig
                 _readValues[key].Remove();
                 _readValues.Remove(key);
             }
-            return ReadValue(valueType, key).IsRead;
+            return readValue(valueType, value, key).IsRead;
+        }
+
+        ConfigProxy<object> readValue(Type supposedType, object fallbackValue, string key)
+        {
+            var typed = typeof(ConfigAccessor)
+                .GetMethod(nameof(ConfigAccessor.ReadValueFrom))
+                .MakeGenericMethod(supposedType)
+                .Invoke(_configAccessor, new object[] { fallbackValue, _subsection, key });
+            var value = (ConfigProxy<object>)((dynamic)typed).CastToRoot();
+            _readValues.Add(key, value);
+
+            return value;
         }
 
         public void Clear()
