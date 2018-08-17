@@ -18,6 +18,7 @@ namespace TinyConfig
             return !(l == r);
         }
 
+        readonly Action _remove;
         readonly Action<T> _valueUpdater;
         readonly Action<string> _commentaryUpdater;
         string _Commentary;
@@ -37,19 +38,36 @@ namespace TinyConfig
 
         public bool IsRead { get; }
 
-        internal ConfigProxy(T value, string commentary, bool isRead, Action<T> valueUpdater, Action<string> commentaryUpdater)
+        internal ConfigProxy(T value, string commentary, bool isRead, 
+            Action<T> valueUpdater, Action<string> commentaryUpdater, Action remove)
         {
             _Value = value;
             _Commentary = commentary;
             IsRead = isRead;
             _valueUpdater = valueUpdater;
             _commentaryUpdater = commentaryUpdater;
+            _remove = remove;
         }
 
         public ConfigProxy<T> SetComment(string commentary)
         {
             Commentary = commentary;
             return this;
+        }
+
+        internal void Remove()
+        {
+            _remove();
+        }
+
+        //internal ConfigProxy<TTo> CastTo<TTo>()
+        //    where TTo : T
+        //{
+        //    return new ConfigProxy<TTo>((TTo)Value, Commentary, IsRead, v => _valueUpdater(v), _commentaryUpdater);
+        //}
+        internal ConfigProxy<object> CastToRoot()
+        {
+            return new ConfigProxy<object>(Value, Commentary, IsRead, v => _valueUpdater((T)v), _commentaryUpdater, _remove);
         }
 
         public override string ToString()
