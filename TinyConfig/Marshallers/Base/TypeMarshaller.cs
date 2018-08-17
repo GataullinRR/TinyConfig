@@ -49,7 +49,7 @@ namespace TinyConfig
                     var hasMarshaller = configAccessor.HasValueMarshaller(field.FieldType);
                     if (hasMarshaller)
                     {
-                        configAccessor.WriteValue(v, field.Name);
+                        configAccessor.WriteValue(field.FieldType, v, field.Name);
                     }
                     else
                     {

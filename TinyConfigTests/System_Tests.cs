@@ -172,6 +172,22 @@ SomeString=#'C'
         }
 
         [Test()]
+        public void WriteСonsecutivelyToSingleSubsection()
+        {
+            var config = Configurable.CreateConfig("WriteСonsecutivelyToSingleSubsection").Clear();
+            config.ReadValueFrom("A", "Section1", "SomeString1");
+            config.ReadValueFrom("B", "Section1", "SomeString2");
+
+            var actual = config.ToString();
+            var expected = @"[Section1]
+SomeString1=#'A'
+SomeString2=#'B'
+";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
         public void ModifyValueInSubsection()
         {
             var config = Configurable.CreateConfig("ModifyValueInSubsection").Clear();

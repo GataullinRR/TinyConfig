@@ -14,19 +14,25 @@ using System.Runtime.CompilerServices;
 namespace TinyConfig.Tests
 {
     [TestFixture()]
-    public class ObjectMarshaller_Tests
+    public class ObjectMarshaller_IntegrationalTests
     {
-        //[Test()]
-        //public void TryPack_FlatStructure()
-        //{
-        //    var m = new FlatStructObjectMarshaller();
-        //    m.TryPack( new V2(1, 2));
+        [Test()]
+        public void TryPack_FlatStructure()
+        {
+            var config = (ConfigAccessor)Configurable.CreateConfig("TryPack_FlatStructure", "ObjectMarshaller_IntegrationalTests").Clear();
+            var proxy = new Proxy(config, "Object1");
 
-        //    var actual = result.Value;
-        //    var expected = "-1 2 3.4 4.59 0";
+            var m = new FlatStructObjectMarshaller();
+            Assert.True(m.TryPack(proxy, new V2(1, 2)));
 
-        //    Assert.AreEqual(expected, actual);
-        //}
+            var actual = config.ToString();
+            var expected = @"[Object1]
+X=1
+Y=2
+";
+
+            Assert.AreEqual(expected, actual);
+        }
 
     }
 }

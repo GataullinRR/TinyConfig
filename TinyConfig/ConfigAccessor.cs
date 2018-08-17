@@ -32,23 +32,23 @@ namespace TinyConfig
         public ConfigProxy<object> ReadValue(Type supposedType, string key)
         {
             var typed = typeof(ConfigAccessor)
-                .GetMethod(nameof(ConfigAccessor.ReadValueFrom), new[] { supposedType, typeof(string), typeof(string) })
+                .GetMethod(nameof(ConfigAccessor.ReadValueFrom))
                 .MakeGenericMethod(supposedType)
-                .Invoke(this, new object[] { supposedType.GetDefaultValue(), _subsection, key });
+                .Invoke(_configAccessor, new object[] { supposedType.GetDefaultValue(), _subsection, key });
             var value = (ConfigProxy<object>)((dynamic)typed).CastToRoot();
             _readValues.Add(key, value);
 
             return value;
         }
 
-        public bool WriteValue<T>(T value, string key)
+        public bool WriteValue(Type valueType, object value, string key)
         {
             if (_readValues.ContainsKey(key))
             {
                 _readValues[key].Remove();
                 _readValues.Remove(key);
             }
-            return ReadValue(typeof(T), key).IsRead;
+            return ReadValue(valueType, key).IsRead;
         }
 
         public void Clear()
@@ -171,7 +171,7 @@ namespace TinyConfig
             var section = new Section(_config.RootSection, subsection);
             if (marshaller == null)
             {
-                throw new NotSupportedException();
+                throw new NotSupportedException($"Тип {typeof(T)} не поддерживается.");
             }
             else if (!isKeyCorrect() || !section.IsCorrect)
             {
@@ -483,9 +483,9 @@ namespace TinyConfig
         //    }
         //}
 
-        //Proxy getProxy()
+        //internal Proxy getProxy(string subsection)
         //{
-        //    return new Proxy(this);
+        //    return new Proxy(this, subsection);
         //}
 
         internal ValueMarshaller GetValueMarshaller(Type valueType)
