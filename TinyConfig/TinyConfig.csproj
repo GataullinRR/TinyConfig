@@ -70,9 +70,6 @@
     <Compile Include="Logging\LogFactory.cs" />
     <Compile Include="Marshallers\Base\ArrayPackingNotSupportedException.cs" />
     <Compile Include="Marshallers\Base\ExactValueMarshaller.cs" />
-    <Compile Include="Marshallers\TimeSpanMarshaller.cs" />
-    <Compile Include="Marshallers\DateTimeOffsetMarshaller.cs" />
-    <Compile Include="Marshallers\DateTimeMarshaller.cs" />
     <Compile Include="Marshallers\ObjectMarshallers\FlatStructObjectMarshaller.cs" />
     <Compile Include="Marshallers\Base\ObjectMarshaller.cs" />
     <Compile Include="Marshallers\Base\SpaceArraySeparatorValueMarshaller.cs" />
