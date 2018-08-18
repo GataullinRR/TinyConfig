@@ -92,6 +92,9 @@ namespace TinyConfig
                         new SingleMarshaller(),
                         new DoubleMarshaller(),
                         new StringMarshaller(),
+                        new DateTimeMarshaller(),
+                        new DateTimeOffsetMarshaller(),
+                        new TimeSpanMarshaller(),
                         new MemoryStreamMarshaller(),
                     }
                 },
@@ -138,7 +141,7 @@ namespace TinyConfig
         public ConfigAccessor AddMarshaller<T>() 
             where T : ValueMarshaller, new()
         {
-            if (typeof(ExactTypeMarshaller).IsAssignableFrom(typeof(T)))
+            if (typeof(ExactValueMarshaller).IsAssignableFrom(typeof(T)))
             {
                 _valueMarshallers[ValueMarshallerType.EXACT].Insert(0, new T());
             }

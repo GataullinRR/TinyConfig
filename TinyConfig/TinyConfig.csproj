@@ -69,8 +69,13 @@
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\LogFactory.cs" />
     <Compile Include="Marshallers\Base\ArrayPackingNotSupportedException.cs" />
-    <Compile Include="Marshallers\Base\ExactTypeMarshaller.cs" />
-    <Compile Include="Marshallers\Base\SpaceArraySeparatorTypeMarshaller.cs" />
+    <Compile Include="Marshallers\Base\ExactValueMarshaller.cs" />
+    <Compile Include="Marshallers\TimeSpanMarshaller.cs" />
+    <Compile Include="Marshallers\DateTimeOffsetMarshaller.cs" />
+    <Compile Include="Marshallers\DateTimeMarshaller.cs" />
+    <Compile Include="Marshallers\ObjectMarshallers\FlatStructObjectMarshaller.cs" />
+    <Compile Include="Marshallers\Base\ObjectMarshaller.cs" />
+    <Compile Include="Marshallers\Base\SpaceArraySeparatorValueMarshaller.cs" />
     <Compile Include="Marshallers\EnumMarshaller.cs" />
     <Compile Include="Marshallers\BooleanMarshaller.cs" />
     <Compile Include="Marshallers\ByteMarshaller.cs" />
@@ -86,7 +91,7 @@
     <Compile Include="Marshallers\UInt32Marshaller.cs" />
     <Compile Include="Marshallers\UInt64Marshaller.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Marshallers\Base\TypeMarshaller.cs" />
+    <Compile Include="Marshallers\Base\ValueMarshaller.cs" />
     <Compile Include="Section.cs" />
     <Compile Include="SectionsFinder.cs" />
     <Compile Include="SectionsTreeBuilder.cs" />

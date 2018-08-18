@@ -2,7 +2,7 @@
 
 namespace TinyConfig.Marshallers
 {
-    public class UInt64Marshaller : SpaceArraySeparatorTypeMarshaller<ulong>
+    public class UInt64Marshaller : SpaceArraySeparatorValueMarshaller<ulong>
     {
         public override bool TryPack(ulong value, out string result)
         {

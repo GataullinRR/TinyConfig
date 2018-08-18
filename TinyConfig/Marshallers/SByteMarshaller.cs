@@ -2,7 +2,7 @@
 
 namespace TinyConfig.Marshallers
 {
-    public class SByteMarshaller : SpaceArraySeparatorTypeMarshaller<sbyte>
+    public class SByteMarshaller : SpaceArraySeparatorValueMarshaller<sbyte>
     {
         public override bool TryPack(sbyte value, out string result)
         {

@@ -2,9 +2,9 @@
 
 namespace TinyConfig
 {
-    public abstract class ExactTypeMarshaller : ValueMarshaller
+    public abstract class ExactValueMarshaller : ValueMarshaller
     {
-        public ExactTypeMarshaller(Type type)
+        public ExactValueMarshaller(Type type)
             :base(t => t == type)
         {
             if (type == null)
@@ -13,7 +13,7 @@ namespace TinyConfig
             }
         }
 
-        public ExactTypeMarshaller(Type type, bool isAlwaysMultiline, string arraySeparator)
+        public ExactValueMarshaller(Type type, bool isAlwaysMultiline, string arraySeparator)
             : base(t => t == type, isAlwaysMultiline, arraySeparator)
         {
             if (type == null)
@@ -23,14 +23,14 @@ namespace TinyConfig
         }
     }
 
-    public abstract class ExactTypeMarshaller<T> : ExactTypeMarshaller
+    public abstract class ExactValueMarshaller<T> : ExactValueMarshaller
     {
-        public ExactTypeMarshaller()
+        public ExactValueMarshaller()
             : this(false, null)
         {
 
         }
-        public ExactTypeMarshaller(bool isAlwaysMultiline, string arraySeparator)
+        public ExactValueMarshaller(bool isAlwaysMultiline, string arraySeparator)
             : base(typeof(T), isAlwaysMultiline, arraySeparator)
         {
 

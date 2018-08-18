@@ -489,7 +489,7 @@ Enum=C\\it is single value" + Global.NL;
             Assert.AreEqual("2", value.Value);
         }
 
-        class VectorMarshaller : ExactTypeMarshaller<V2>
+        class VectorMarshaller : ExactValueMarshaller<V2>
         {
             public override bool TryPack(V2 value, out string result)
             {
@@ -519,7 +519,7 @@ Enum=C\\it is single value" + Global.NL;
             }
         }
 
-        class MyIntMarshaller : ExactTypeMarshaller<int>
+        class MyIntMarshaller : ExactValueMarshaller<int>
         {
             public override bool TryPack(int value, out string result)
             {

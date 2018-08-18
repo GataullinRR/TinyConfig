@@ -35,5 +35,10 @@ namespace TinyConfig
             return Value == other.Value &&
                    IsMultiline == other.IsMultiline;
         }
+
+        public override string ToString()
+        {
+            return $"{nameof(IsMultiline)}:{IsMultiline} {nameof(Value)}:{Value}";
+        }
     }
 }

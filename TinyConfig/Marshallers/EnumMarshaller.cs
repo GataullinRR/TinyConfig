@@ -8,7 +8,7 @@ using Utilities.Types;
 
 namespace TinyConfig.Marshallers
 {
-    public class EnumMarshaller : SpaceArraySeparatorTypeMarshaller
+    public class EnumMarshaller : SpaceArraySeparatorValueMarshaller
     {
         public EnumMarshaller() 
             : base(t => t.IsEnum)

@@ -60,6 +60,73 @@ namespace TinyConfig.Tests
         }
 
         [Test()]
+        public void TryPackUnpack_DateTime()
+        {
+            var m = new DateTimeMarshaller();
+            var date1 = DateTime.Now;
+            var date2 = new DateTime(99999, DateTimeKind.Local);
+            var date3 = new DateTime(99999, DateTimeKind.Unspecified);
+            var date4 = new DateTime(99999, DateTimeKind.Utc);
+
+            Assert.True(m.TryPack(date1, out ConfigValue result1));
+            Assert.True(m.TryPack(date2, out ConfigValue result2));
+            Assert.True(m.TryPack(date3, out ConfigValue result3));
+            Assert.True(m.TryPack(date4, out ConfigValue result4));
+
+            Assert.True(m.TryUnpack(result1.Value, out DateTime actualDate1));
+            Assert.True(m.TryUnpack(result2.Value, out DateTime actualDate2));
+            Assert.True(m.TryUnpack(result3.Value, out DateTime actualDate3));
+            Assert.True(m.TryUnpack(result4.Value, out DateTime actualDate4));
+
+            Assert.AreEqual(date1, actualDate1);
+            Assert.AreEqual(date2, actualDate2);
+            Assert.AreEqual(date3, actualDate3);
+            Assert.AreEqual(date4, actualDate4);
+        }
+
+        [Test()]
+        public void TryPackUnpack_DateTimeOffset()
+        {
+            var m = new DateTimeOffsetMarshaller();
+            var date1 = DateTimeOffset.Now;
+            var date2 = DateTimeOffset.UtcNow;
+
+            Assert.True(m.TryPack(date1, out ConfigValue result1));
+            Assert.True(m.TryPack(date2, out ConfigValue result2));
+
+            Assert.True(m.TryUnpack(result1.Value, out DateTimeOffset actualDate1));
+            Assert.True(m.TryUnpack(result2.Value, out DateTimeOffset actualDate2));
+
+            Assert.AreEqual(date1, actualDate1);
+            Assert.AreEqual(date2, actualDate2);
+        }
+
+        [Test()]
+        public void TryPackUnpack_TimeSpan()
+        {
+            var m = new TimeSpanMarshaller();
+            var date1 = TimeSpan.Zero;
+            var date2 = new TimeSpan(9999999);
+            var date3 = new TimeSpan(-9999999);
+            var date4 = TimeSpan.MinValue;
+
+            Assert.True(m.TryPack(date1, out ConfigValue result1));
+            Assert.True(m.TryPack(date2, out ConfigValue result2));
+            Assert.True(m.TryPack(date3, out ConfigValue result3));
+            Assert.True(m.TryPack(date4, out ConfigValue result4));
+
+            Assert.True(m.TryUnpack(result1.Value, out TimeSpan actualDate1));
+            Assert.True(m.TryUnpack(result2.Value, out TimeSpan actualDate2));
+            Assert.True(m.TryUnpack(result3.Value, out TimeSpan actualDate3));
+            Assert.True(m.TryUnpack(result4.Value, out TimeSpan actualDate4));
+
+            Assert.AreEqual(date1, actualDate1);
+            Assert.AreEqual(date2, actualDate2);
+            Assert.AreEqual(date3, actualDate3);
+            Assert.AreEqual(date4, actualDate4);
+        }
+
+        [Test()]
         public void TryPack_StringArray()
         {
             var m = new StringMarshaller();
