@@ -10,7 +10,7 @@ using Utilities.Extensions;
 
 namespace SpecificMarshallers
 {
-    public class BinaryMarshaller<T> : ExactTypeMarshaller<T>
+    public class BinaryMarshaller<T> : ExactValueMarshaller<T>
     {
         readonly BinaryFormatter _serializer = new BinaryFormatter();
 

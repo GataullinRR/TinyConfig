@@ -10,7 +10,7 @@ using Utilities.Extensions;
 
 namespace SpecificMarshallers
 {
-    public class IPEndPointMarshaller : ExactTypeMarshaller<IPEndPoint>
+    public class IPEndPointMarshaller : ExactValueMarshaller<IPEndPoint>
     {
         public override bool TryPack(IPEndPoint value, out string result)
         {

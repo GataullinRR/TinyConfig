@@ -2,7 +2,7 @@
 
 namespace TinyConfig.Marshallers
 {
-    public class Int16Marshaller : SpaceArraySeparatorTypeMarshaller<short>
+    public class Int16Marshaller : SpaceArraySeparatorValueMarshaller<short>
     {
         public override bool TryPack(short value, out string result)
         {

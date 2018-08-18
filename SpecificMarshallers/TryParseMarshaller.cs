@@ -10,7 +10,7 @@ using Utilities.Extensions;
 
 namespace SpecificMarshallers
 {
-    public class TryParseMarshaller<T> : ExactTypeMarshaller<T>
+    public class TryParseMarshaller<T> : ExactValueMarshaller<T>
     {
         delegate bool TryParseDelegate(string packed, out T result);
 

@@ -8,7 +8,7 @@ using TinyConfig;
 
 namespace SpecificMarshallers
 {
-    public class IPAddressMarshaller : ExactTypeMarshaller<IPAddress>
+    public class IPAddressMarshaller : ExactValueMarshaller<IPAddress>
     {
         public IPAddressMarshaller()
             : base(false, " ") { }

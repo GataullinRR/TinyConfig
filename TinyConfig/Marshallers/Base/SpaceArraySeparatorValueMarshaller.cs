@@ -2,15 +2,15 @@
 
 namespace TinyConfig
 {
-    public abstract class SpaceArraySeparatorTypeMarshaller : ValueMarshaller
+    public abstract class SpaceArraySeparatorValueMarshaller : ValueMarshaller
     {
-        public SpaceArraySeparatorTypeMarshaller(Func<Type, bool> isTypeSupportedTester)
+        public SpaceArraySeparatorValueMarshaller(Func<Type, bool> isTypeSupportedTester)
             : base(isTypeSupportedTester, false, " ")
         {
 
         }
 
-        public SpaceArraySeparatorTypeMarshaller(
+        public SpaceArraySeparatorValueMarshaller(
             Func<Type, bool> isTypeSupportedTester, bool isAlwaysMultiline, string arraySeparator)
             : base(isTypeSupportedTester, isAlwaysMultiline, arraySeparator)
         {
@@ -18,15 +18,15 @@ namespace TinyConfig
         }
     }
 
-    public abstract class SpaceArraySeparatorTypeMarshaller<T> : ExactTypeMarshaller<T>
+    public abstract class SpaceArraySeparatorValueMarshaller<T> : ExactValueMarshaller<T>
     {
-        public SpaceArraySeparatorTypeMarshaller()
+        public SpaceArraySeparatorValueMarshaller()
             : base(false, " ")
         {
 
         }
 
-        public SpaceArraySeparatorTypeMarshaller(bool isAlwaysMultiline, string arraySeparator)
+        public SpaceArraySeparatorValueMarshaller(bool isAlwaysMultiline, string arraySeparator)
             : base(isAlwaysMultiline, arraySeparator)
         {
 
