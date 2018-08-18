@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using Utilities;
 using Utilities.Extensions;
+using Utilities.Types;
 
 namespace TinyConfig
 {
@@ -34,8 +35,7 @@ namespace TinyConfig
 
         void Config_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            var sections = from kvp in KVPs
-                           group kvp by kvp.Section into g
+            var sections = from g in KVPs.Group(v => v.Section, (a, b) => a.Equals(b))
                            orderby g.Key.Order
                            orderby g.Key.FullName
                            select new { Section = g.Key, Body = g.ToArray() };
@@ -44,11 +44,6 @@ namespace TinyConfig
             var writer = new StreamWriter(_file, _encoding);
             foreach (var group in sections)
             {
-                //if (group.Section.FullName != RootSection.FullName
-                //    && group.Section.IsInsideSection(RootSection.FullName))
-                //{
-                //    throw new InvalidOperationException();
-                //}
                 if (!group.Section.IsInsideSection(RootSection.FullName))
                 {
                     throw new InvalidOperationException();
@@ -75,15 +70,19 @@ namespace TinyConfig
 
         public override string ToString()
         {
+            var EMPTY = "" + Global.NL;
+
             _file.Position = 0;
             if (_file.Length == 0)
             {
-                return "" + Global.NL;
+                return EMPTY;
             }
             else
             {
-                return new StreamReader(_file, _encoding).ReadAllLines()
-                    .Aggregate((acc, line) => acc + Global.NL + line) + Global.NL;
+                var lines = new StreamReader(_file, _encoding).ReadAllLines().ToArray();
+                return lines.IsEmpty() 
+                    ? EMPTY
+                    : (lines.Aggregate((acc, line) => acc + Global.NL + line) + Global.NL);
             }
         }
     }

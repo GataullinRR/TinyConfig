@@ -2,7 +2,7 @@
 
 namespace TinyConfig
 {
-    public abstract class ExactTypeMarshaller : TypeMarshaller
+    public abstract class ExactTypeMarshaller : ValueMarshaller
     {
         public ExactTypeMarshaller(Type type)
             :base(t => t == type)

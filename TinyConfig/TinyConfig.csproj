@@ -64,6 +64,7 @@
     <Compile Include="Configurable.cs" />
     <Compile Include="ConfigValue.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="IConfigAccessor.cs" />
     <Compile Include="KVPExtractor.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\LogFactory.cs" />

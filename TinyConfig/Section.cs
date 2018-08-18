@@ -49,8 +49,7 @@ namespace TinyConfig
         public bool IsInsideSection(string sectionFullName)
         {
             var passedInSection = new Section(sectionFullName);
-            //if (!passedInSection.isValid())
-            if (!passedInSection.IsCorrect)
+            if (!passedInSection.IsCorrect || !IsCorrect)
             {
                 throw new ArgumentException();
             }
@@ -68,15 +67,21 @@ namespace TinyConfig
                 return FullName.StartsWith(passedInSection.FullName);
             }
         }
-        //bool isValid()
-        //{
-        //    return IsRoot || 
-        //            (
-        //                FullName.Length > 0
-        //                && !FullName.StartsWith(Constants.SUBSECTION_SEPARATOR)
-        //                && !FullName.EndsWith(Constants.SUBSECTION_SEPARATOR)
-        //            );
-        //}
+
+        public string GetSubsection(Section rootSection)
+        {
+            if (!IsInsideSection(rootSection) || IsRoot)
+            {
+                throw new ArgumentException();
+            }
+            else
+            {
+                var count = rootSection.IsRoot 
+                    ? 0 
+                    : (rootSection.FullName.Length + Constants.SUBSECTION_SEPARATOR.Length);
+                return FullName.Remove(0, count);
+            }
+        }
 
         public override bool Equals(object obj)
         {

@@ -12,9 +12,60 @@ using Utilities.Types;
 
 namespace TinyConfig
 {
+    public class Proxy : IConfigAccessorProxy
+    {
+        readonly ConfigAccessor _configAccessor;
+        readonly string _subsection;
+        readonly Dictionary<string, ConfigProxy<object>> _readValues = new Dictionary<string, ConfigProxy<object>>();
+
+        public Proxy(ConfigAccessor configAccessor, string subsection)
+        {
+            _configAccessor = configAccessor;
+            _subsection = subsection;
+        }
+
+        public bool HasValueMarshaller(Type type)
+        {
+            return _configAccessor.GetValueMarshaller(type) != null;
+        }
+
+        public ConfigProxy<object> ReadValue(Type supposedType, string key)
+        {
+            return readValue(supposedType, supposedType.GetDefaultValue(), key);
+        }
+
+        public bool WriteValue(Type valueType, object value, string key)
+        {
+            if (_readValues.ContainsKey(key))
+            {
+                _readValues[key].Remove();
+                _readValues.Remove(key);
+            }
+            return readValue(valueType, value, key).IsRead;
+        }
+
+        ConfigProxy<object> readValue(Type supposedType, object fallbackValue, string key)
+        {
+            var typed = typeof(ConfigAccessor)
+                .GetMethod(nameof(ConfigAccessor.ReadValueFrom))
+                .MakeGenericMethod(supposedType)
+                .Invoke(_configAccessor, new object[] { fallbackValue, _subsection, key });
+            var value = (ConfigProxy<object>)((dynamic)typed).CastToRoot();
+            _readValues.Add(key, value);
+
+            return value;
+        }
+
+        public void Clear()
+        {
+            _readValues.ForEach(kvp => kvp.Value.Remove());
+            _readValues.Clear();
+        }
+    }
+
     public class ConfigAccessor
     {
-        enum MarshallerType
+        enum ValueMarshallerType
         {
             EXACT,
             MULTIPLE,
@@ -22,12 +73,12 @@ namespace TinyConfig
 
         readonly ConfigReaderWriter _config;
         readonly HashSet<string> _proxyPaths = new HashSet<string>();
-        readonly Dictionary<MarshallerType, List<TypeMarshaller>> _marshallers
-            = new Dictionary<MarshallerType, List<TypeMarshaller>>()
+        readonly Dictionary<ValueMarshallerType, List<ValueMarshaller>> _valueMarshallers
+            = new Dictionary<ValueMarshallerType, List<ValueMarshaller>>()
             {
                 {
-                    MarshallerType.EXACT,
-                    new List<TypeMarshaller>()
+                    ValueMarshallerType.EXACT,
+                    new List<ValueMarshaller>()
                     {
                         new BooleanMarshaller(),
                         new SByteMarshaller(),
@@ -45,13 +96,17 @@ namespace TinyConfig
                     }
                 },
                 {
-                    MarshallerType.MULTIPLE,
-                    new List<TypeMarshaller>()
+                    ValueMarshallerType.MULTIPLE,
+                    new List<ValueMarshaller>()
                     {
                         new EnumMarshaller()
                     }
                 }
             };
+        readonly List<ObjectMarshaller> _objectMarshallers = new List<ObjectMarshaller>()
+        {
+             new FlatStructObjectMarshaller()
+        };
 
         public ConfigSourceInfo SourceInfo { get; }
 
@@ -81,16 +136,23 @@ namespace TinyConfig
         }
 
         public ConfigAccessor AddMarshaller<T>() 
-            where T : TypeMarshaller, new()
+            where T : ValueMarshaller, new()
         {
             if (typeof(ExactTypeMarshaller).IsAssignableFrom(typeof(T)))
             {
-                _marshallers[MarshallerType.EXACT].Insert(0, new T());
+                _valueMarshallers[ValueMarshallerType.EXACT].Insert(0, new T());
             }
             else
             {
-                _marshallers[MarshallerType.MULTIPLE].Insert(0, new T());
+                _valueMarshallers[ValueMarshallerType.MULTIPLE].Insert(0, new T());
             }
+
+            return this;
+        }
+        public ConfigAccessor AddObjectMarshaller<T>()
+            where T : ObjectMarshaller, new()
+        {
+            _objectMarshallers.Insert(0, new T());
 
             return this;
         }
@@ -110,13 +172,11 @@ namespace TinyConfig
             var valueType = typeof(T).IsArray
                 ? typeof(T).GetElementType()
                 : typeof(T);
-            var marshaller = ArrayUtils
-                .ConcatSequences(_marshallers[MarshallerType.EXACT], _marshallers[MarshallerType.MULTIPLE])
-                .FirstOrDefault(m => m.IsTypeSupported(valueType));
+            var marshaller = GetValueMarshaller(valueType);
             var section = new Section(_config.RootSection, subsection);
             if (marshaller == null)
             {
-                throw new NotSupportedException();
+                throw new NotSupportedException($"Тип {typeof(T)} не поддерживается.");
             }
             else if (!isKeyCorrect() || !section.IsCorrect)
             {
@@ -149,7 +209,7 @@ namespace TinyConfig
 
             _proxyPaths.Add(path);
             ConfigProxy<T> proxy = null;
-            proxy = new ConfigProxy<T>(readValue, readCommentary, tryUpdateValueInConfigFile, tryUpdateCommentaryInConfigFile);
+            proxy = new ConfigProxy<T>(readValue, readCommentary, validKVPFound, tryUpdateValueInConfigFile, tryUpdateCommentaryInConfigFile, tryRemoveValueFromConfigFile);
             return proxy;
 
             ////////////////////////////////////////////////////
@@ -192,6 +252,14 @@ namespace TinyConfig
                 if (!_config.KVPs.IsReadOnly)
                 {
                     _config.KVPs[kvpIndex] = pack(proxy.Value, newValue);
+                }
+            }
+            void tryRemoveValueFromConfigFile()
+            {
+                if (!_config.KVPs.IsReadOnly)
+                {
+                    _config.KVPs.RemoveAt(kvpIndex);
+                    _proxyPaths.Remove(path);
                 }
             }
             T cast(dynamic value)
@@ -267,6 +335,109 @@ namespace TinyConfig
                     }
                 }
             }
+        }
+
+        public ConfigProxy<T> ReadObject<T>(T fallbackValue, [CallerMemberName]string key = "")
+        {
+            return ReadObjectFrom<T>(fallbackValue, null, typeof(T), key);
+        }
+        public ConfigProxy<T> ReadObjectFrom<T>(T fallbackValue, string subsection, [CallerMemberName]string key = "")
+        {
+            return ReadObjectFrom<T>(fallbackValue, subsection, typeof(T), key);
+        }
+        public ConfigProxy<T> ReadObjectFrom<T>(T fallbackValue, string subsection, Type valueType, [CallerMemberName]string key = "")
+        {
+            var path = $".{subsection}.{key}.{key}";
+            if (_proxyPaths.Contains(path))
+            {
+                throw new InvalidOperationException("Значение с данным ключем уже было прочитано");
+            }
+
+            var marshaller = _objectMarshallers.FirstOrDefault(m => m.IsTypeSupported(valueType));
+            var section = new Section(new Section(_config.RootSection, subsection), key);
+            if (marshaller == null)
+            {
+                throw new NotSupportedException($"Тип {typeof(T)} не поддерживается.");
+            }
+            else if (!section.IsCorrect)
+            {
+                throw new ArgumentException();
+            }
+
+            T readValue = fallbackValue;
+            var validKVPFound = false;
+            foreach (var kvp in _config.KVPs)
+            {
+                if (kvp.Section.Equals(section))
+                {
+                    var configProxy = getProxy();
+                    var isParsed = marshaller.TryUnpack(configProxy, valueType, out dynamic parsedValue);
+                    readValue = isParsed ? parsedValue : fallbackValue;
+                    validKVPFound = isParsed;
+                    if (validKVPFound)
+                    {
+                        break;
+                    }
+                }
+            }
+            if (!validKVPFound)
+            {
+                tryAppendKVP();
+            }
+
+            _proxyPaths.Add(path);
+            ConfigProxy<T> proxy = null;
+            proxy = new ConfigProxy<T>(readValue, null, validKVPFound, tryUpdateValueInConfigFile, tryUpdateCommentaryInConfigFile, tryRemoveValueFromConfigFile);
+            return proxy;
+
+            ////////////////////////////////////////////////////
+
+            void tryAppendKVP()
+            {
+                if (!_config.KVPs.IsReadOnly)
+                {
+                    pack(fallbackValue);
+                }
+            }
+            void tryUpdateValueInConfigFile(T newValue)
+            {
+                if (!_config.KVPs.IsReadOnly)
+                {
+                    pack(newValue);
+                }
+            }
+            void pack(T newValue)
+            {
+                var accessorProxy = getProxy();
+                var isOk = marshaller.TryPack(accessorProxy, newValue);
+                if (!isOk)
+                {
+                    accessorProxy.Clear();
+                }
+            }
+            void tryUpdateCommentaryInConfigFile(string newValue)
+            {
+                // No notion for objects' commentaries
+            }
+            void tryRemoveValueFromConfigFile()
+            {
+                if (!_config.KVPs.IsReadOnly)
+                {
+                    _config.KVPs.Remove(kvp => kvp.Section.Equals(section));
+                    _proxyPaths.Remove(path);
+                }
+            }
+            Proxy getProxy()
+            {
+                return new Proxy(this, section.GetSubsection(_config.RootSection));
+            }
+        }
+
+        internal ValueMarshaller GetValueMarshaller(Type valueType)
+        {
+            return ArrayUtils
+                .ConcatSequences(_valueMarshallers[ValueMarshallerType.EXACT], _valueMarshallers[ValueMarshallerType.MULTIPLE])
+                .FirstOrDefault(m => m.IsTypeSupported(valueType));
         }
 
         public override string ToString()

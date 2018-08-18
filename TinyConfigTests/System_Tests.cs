@@ -172,6 +172,22 @@ SomeString=#'C'
         }
 
         [Test()]
+        public void WriteСonsecutivelyToSingleSubsection()
+        {
+            var config = Configurable.CreateConfig("WriteСonsecutivelyToSingleSubsection").Clear();
+            config.ReadValueFrom("A", "Section1", "SomeString1");
+            config.ReadValueFrom("B", "Section1", "SomeString2");
+
+            var actual = config.ToString();
+            var expected = @"[Section1]
+SomeString1=#'A'
+SomeString2=#'B'
+";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
         public void ModifyValueInSubsection()
         {
             var config = Configurable.CreateConfig("ModifyValueInSubsection").Clear();
@@ -274,6 +290,50 @@ SomeDouble=130" + Global.NL;
             var expected = @"SomeInt32=10
 SomeDoubleArr=-1 2 2.345
 SomeEmptyDoubleArr=" + Global.NL;
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void WriteFlatStructObjects()
+        {
+            var config = Configurable.CreateConfig("WriteFlatStructObjects").Clear();
+            config.ReadObject(new V2(1, 2), "Object1");
+            config.ReadObject(new V2(3, 4), "Object2");
+
+            var actual = config.ToString();
+            var expected = @"[Object1]
+X=1
+Y=2
+[Object2]
+X=3
+Y=4" + Global.NL;
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Serializable]
+        struct MixedFlatnessStruct
+        {
+            double X1;
+            V2 V1;
+
+            public MixedFlatnessStruct(double x1, V2 v1)
+            {
+                X1 = x1;
+                V1 = v1;
+            }
+        }
+
+        [Test()]
+        public void WriteMixedFlatnessStructObject()
+        {
+            var config = Configurable.CreateConfig("WriteMixedFlatnessStructObject").Clear();
+            config.ReadObject(new MixedFlatnessStruct(1, new V2(2, 3)), "Object1");
+            config.ReadObject(new MixedFlatnessStruct(4, new V2(5, 6)), "Object2");
+
+            var actual = config.ToString();
+            var expected = @"" + Global.NL;
 
             Assert.AreEqual(expected, actual);
         }
@@ -526,6 +586,20 @@ SomeV2=X:-9 Y:9
             config = Configurable.CreateConfig("ReadFromNotEmptyConfig");
             Assert.AreEqual("1", config.ReadValue("", "Key1").Value);
             Assert.AreEqual("2", config.ReadValue("", "Key2").Value);
+        }
+
+        [Test()]
+        public void ReadFlatStructObjectsFromNotEmptyConfig()
+        {
+            var config = Configurable.CreateConfig("ReadFlatStructObjectsFromNotEmptyConfig").Clear();
+            config.ReadObject(new V2(1, 2), "Object1");
+            config.ReadObject(new V2(3, 4), "Object2");
+            config.Close();
+            Configurable.ReleaseFile(config.SourceInfo.FilePath);
+
+            config = Configurable.CreateConfig("ReadFlatStructObjectsFromNotEmptyConfig");
+            Assert.AreEqual(new V2(1, 2), config.ReadObject(V2.Zero, "Object1").Value);
+            Assert.AreEqual(new V2(3, 4), config.ReadObject(V2.Zero, "Object2").Value);
         }
 
         [Test()]
