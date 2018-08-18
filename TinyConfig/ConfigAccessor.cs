@@ -92,6 +92,9 @@ namespace TinyConfig
                         new SingleMarshaller(),
                         new DoubleMarshaller(),
                         new StringMarshaller(),
+                        new DateTimeMarshaller(),
+                        new DateTimeOffsetMarshaller(),
+                        new TimeSpanMarshaller(),
                         new MemoryStreamMarshaller(),
                     }
                 },
