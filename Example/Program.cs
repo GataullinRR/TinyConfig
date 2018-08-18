@@ -9,7 +9,7 @@ namespace Example
 {
     class Program
     {
-        static readonly IConfigAccessor _config = Configurable.CreateConfig("ExampleConfigFile");
+        static readonly ConfigAccessor _config = Configurable.CreateConfig("ExampleConfigFile");
         static readonly ConfigProxy<int> SOME_INT = _config.ReadValue(100);
         static readonly ConfigProxy<string> SOME_MULTILINE_STRING_INT = _config.ReadValue("'Hello' \n\r all!");
 

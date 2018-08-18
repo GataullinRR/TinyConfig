@@ -63,7 +63,7 @@ namespace TinyConfig
         }
     }
 
-    public class ConfigAccessor : IConfigAccessor
+    public class ConfigAccessor
     {
         enum ValueMarshallerType
         {
@@ -337,161 +337,101 @@ namespace TinyConfig
             }
         }
 
-        //public ConfigProxy<T> ReadObjectFrom<T>(T fallbackValue, string subsection, Type type, [CallerMemberName]string key = "")
-        //{
-        //    var path = $".{subsection}.{key}.{key}";
-        //    if (_proxyPaths.Contains(path))
-        //    {
-        //        throw new InvalidOperationException("Значение с данным ключем уже было прочитано");
-        //    }
+        public ConfigProxy<T> ReadObject<T>(T fallbackValue, [CallerMemberName]string key = "")
+        {
+            return ReadObjectFrom<T>(fallbackValue, null, typeof(T), key);
+        }
+        public ConfigProxy<T> ReadObjectFrom<T>(T fallbackValue, string subsection, [CallerMemberName]string key = "")
+        {
+            return ReadObjectFrom<T>(fallbackValue, subsection, typeof(T), key);
+        }
+        public ConfigProxy<T> ReadObjectFrom<T>(T fallbackValue, string subsection, Type valueType, [CallerMemberName]string key = "")
+        {
+            var path = $".{subsection}.{key}.{key}";
+            if (_proxyPaths.Contains(path))
+            {
+                throw new InvalidOperationException("Значение с данным ключем уже было прочитано");
+            }
 
-        //    var valueType = type.IsArray
-        //        ? type.GetElementType()
-        //        : type;
-        //    var marshaller = _objectMarshallers.FirstOrDefault(m => m.IsTypeSupported(valueType));
-        //    var section = new Section(new Section(_config.RootSection, subsection), key);
-        //    if (marshaller == null)
-        //    {
-        //        throw new NotSupportedException();
-        //    }
-        //    else if (!section.IsCorrect)
-        //    {
-        //        throw new ArgumentException();
-        //    }
+            var marshaller = _objectMarshallers.FirstOrDefault(m => m.IsTypeSupported(valueType));
+            var section = new Section(new Section(_config.RootSection, subsection), key);
+            if (marshaller == null)
+            {
+                throw new NotSupportedException($"Тип {typeof(T)} не поддерживается.");
+            }
+            else if (!section.IsCorrect)
+            {
+                throw new ArgumentException();
+            }
 
-        //    T readValue = fallbackValue;
-        //    var validKVPFound = false;
-        //    foreach (var kvp in _config.KVPs)
-        //    {
-        //        if (kvp.Section.Equals(section))
-        //        {
-        //            var isParsed = marshaller.TryUnpack(getProxy(), valueType, out dynamic parsedValue);
-        //            readValue = isParsed ? cast(parsedValue) : fallbackValue;
-        //            validKVPFound = isParsed;
-        //            if (validKVPFound)
-        //            {
-        //                break;
-        //            }
-        //        }
-        //    }
-        //    if (!validKVPFound)
-        //    {
-        //        tryAppendKVP();
-        //    }
+            T readValue = fallbackValue;
+            var validKVPFound = false;
+            foreach (var kvp in _config.KVPs)
+            {
+                if (kvp.Section.Equals(section))
+                {
+                    var configProxy = getProxy();
+                    var isParsed = marshaller.TryUnpack(configProxy, valueType, out dynamic parsedValue);
+                    readValue = isParsed ? parsedValue : fallbackValue;
+                    validKVPFound = isParsed;
+                    if (validKVPFound)
+                    {
+                        break;
+                    }
+                }
+            }
+            if (!validKVPFound)
+            {
+                tryAppendKVP();
+            }
 
-        //    _proxyPaths.Add(path);
-        //    ConfigProxy<T> proxy = null;
-        //    proxy = new ConfigProxy<T>(readValue, null, validKVPFound, tryUpdateValueInConfigFile, tryUpdateCommentaryInConfigFile);
-        //    return proxy;
+            _proxyPaths.Add(path);
+            ConfigProxy<T> proxy = null;
+            proxy = new ConfigProxy<T>(readValue, null, validKVPFound, tryUpdateValueInConfigFile, tryUpdateCommentaryInConfigFile, tryRemoveValueFromConfigFile);
+            return proxy;
 
-        //    ////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////
 
-        //    void tryAppendKVP()
-        //    {
-        //        if (!_config.KVPs.IsReadOnly)
-        //        {
-        //            pack(fallbackValue);
-        //        }
-        //    }
-        //    void tryUpdateValueInConfigFile(T newValue)
-        //    {
-        //        if (!_config.KVPs.IsReadOnly)
-        //        {
-        //            pack(newValue);
-        //        }
-        //    }
-        //    void pack(T newValue)
-        //    {
-        //        var accessorProxy = getProxy();
-        //        var isOk = marshaller.TryPack(accessorProxy, newValue);
-        //        if (!isOk)
-        //        {
-        //            accessorProxy.Clear();
-        //        }
-        //    }
-        //    void tryUpdateCommentaryInConfigFile(string newValue)
-        //    {
-        //        // No notion for objects' commentaries
-        //    }
-        //    T cast(dynamic value)
-        //    {
-        //        var valueT = value.GetType();
-        //        var castToT = typeof(T);
-        //        if (castToT.IsArray)
-        //        {
-        //            return castAsArrayElement();
-        //        }
-        //        else
-        //        {
-        //            return castAsSingleElement();
-        //        }
-
-        //        ///////////////////////////
-
-        //        T castAsArrayElement()
-        //        {
-        //            var isEmptyArray = ((Array)value).Length == 0;
-        //            var isArrayOfT = valueT.IsArray
-        //                ? (isEmptyArray ? false : value[0].GetType() == castToT.GetElementType())
-        //                : false;
-        //            if (isArrayOfT)
-        //            {
-        //                var arr = (Array)value;
-        //                dynamic result = Array.CreateInstance(castToT.GetElementType(), arr.Length);
-        //                var i = 0;
-        //                foreach (var item in arr)
-        //                {
-        //                    result.SetValue(item, i);
-        //                    i++;
-        //                }
-
-        //                return result;
-        //            }
-        //            else if (isEmptyArray)
-        //            {
-        //                dynamic result = Array.CreateInstance(castToT.GetElementType(), 0);
-
-        //                return result;
-        //            }
-        //            else
-        //            {
-        //                throw new ArgumentException();
-        //            }
-        //        }
-
-        //        T castAsSingleElement()
-        //        {
-        //            var isArrayOfT = valueT.IsArray
-        //                ? (((Array)value).Length > 0 ? value[0].GetType() == castToT : false)
-        //                : false;
-        //            if (isArrayOfT)
-        //            {
-        //                var arr = (Array)value;
-        //                if (arr.Length == 1)
-        //                {
-        //                    return (T)value[0];
-        //                }
-        //                else
-        //                {
-        //                    throw new ArgumentException();
-        //                }
-        //            }
-        //            else if (valueT == castToT)
-        //            {
-        //                return (T)value;
-        //            }
-        //            else
-        //            {
-        //                throw new ArgumentException();
-        //            }
-        //        }
-        //    }
-        //}
-
-        //internal Proxy getProxy(string subsection)
-        //{
-        //    return new Proxy(this, subsection);
-        //}
+            void tryAppendKVP()
+            {
+                if (!_config.KVPs.IsReadOnly)
+                {
+                    pack(fallbackValue);
+                }
+            }
+            void tryUpdateValueInConfigFile(T newValue)
+            {
+                if (!_config.KVPs.IsReadOnly)
+                {
+                    pack(newValue);
+                }
+            }
+            void pack(T newValue)
+            {
+                var accessorProxy = getProxy();
+                var isOk = marshaller.TryPack(accessorProxy, newValue);
+                if (!isOk)
+                {
+                    accessorProxy.Clear();
+                }
+            }
+            void tryUpdateCommentaryInConfigFile(string newValue)
+            {
+                // No notion for objects' commentaries
+            }
+            void tryRemoveValueFromConfigFile()
+            {
+                if (!_config.KVPs.IsReadOnly)
+                {
+                    _config.KVPs.Remove(kvp => kvp.Section.Equals(section));
+                    _proxyPaths.Remove(path);
+                }
+            }
+            Proxy getProxy()
+            {
+                return new Proxy(this, section.GetSubsection(_config.RootSection));
+            }
+        }
 
         internal ValueMarshaller GetValueMarshaller(Type valueType)
         {

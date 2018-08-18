@@ -57,7 +57,7 @@ namespace TinyConfig.Tests
         [Test()]
         public void TryPack_FlatStructure()
         {
-            var config = (ConfigAccessor)Configurable.CreateConfig("TryPack_FlatStructure", "ObjectMarshaller_IntegrationalTests").Clear();
+            var config = Configurable.CreateConfig("TryPack_FlatStructure", "ObjectMarshaller_IntegrationalTests").Clear();
             var proxy = new Proxy(config, "Object1");
 
             var m = new FlatStructObjectMarshaller();
