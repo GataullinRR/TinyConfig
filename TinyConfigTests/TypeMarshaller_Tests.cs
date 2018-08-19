@@ -168,27 +168,6 @@ namespace TinyConfig.Tests
             Assert.AreEqual(data3, actualData3);
         }
 
-        //[Test()]
-        //public void TryPackUnpack_UnknownList()
-        //{
-        //    var m = new ListMarshaller();
-        //    var data1 = new List<n>() { };
-        //    var data2 = new List<int>() { 1 };
-        //    var data3 = new List<int>() { 1, 2, 3 };
-
-        //    Assert.True(m.TryPack(data1, out ConfigValue result1));
-        //    Assert.True(m.TryPack(data2, out ConfigValue result2));
-        //    Assert.True(m.TryPack(data3, out ConfigValue result3));
-
-        //    Assert.True(m.TryUnpack(result1, typeof(List<int>), out object actualData1));
-        //    Assert.True(m.TryUnpack(result2, typeof(List<int>), out object actualData2));
-        //    Assert.True(m.TryUnpack(result3, typeof(List<int>), out object actualData3));
-
-        //    Assert.AreEqual(data1, actualData1);
-        //    Assert.AreEqual(data2, actualData2);
-        //    Assert.AreEqual(data3, actualData3);
-        //}
-
         [Test()]
         public void TryPack_StringArray()
         {

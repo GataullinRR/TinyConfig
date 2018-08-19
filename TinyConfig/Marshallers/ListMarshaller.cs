@@ -32,8 +32,9 @@ namespace TinyConfig.Marshallers
 
         public override bool TryPack(object value, out string result)
         {
+            ConfigValue configValue = null;
             var ok = getMarshaller(value.GetType())
-                .TryPack(((dynamic)value).ToArray(), out ConfigValue configValue);
+                ?.TryPack(((dynamic)value).ToArray(), out configValue) ?? false;
             result = ok ? configValue.Value : null;
 
             return ok;
@@ -41,9 +42,10 @@ namespace TinyConfig.Marshallers
 
         public override bool TryUnpack(string packed, Type supposedType, out object result)
         {
+            result = null;
             var elementType = getElementType(supposedType);
             var ok = getMarshaller(supposedType)
-                .TryUnpack(new ConfigValue(packed, false), supposedType, out result);
+                ?.TryUnpack(new ConfigValue(packed, false), supposedType, out result) ?? false;
             result = ok
                 ? constructList(result)
                 : result;
