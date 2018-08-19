@@ -133,6 +133,32 @@ namespace TinyConfig
             return this;
         }
 
+        public ConfigProxy<T> Read<T>(T fallbackValue, [CallerMemberName]string key = "")
+        {
+            return ReadFrom(fallbackValue, null, key);
+        }
+        public ConfigProxy<T> ReadFrom<T>(T fallbackValue, string subsection, [CallerMemberName]string key = "")
+        {
+            ConfigProxy<T> value = null;
+            var valueType = typeof(T).IsArray
+                ? typeof(T).GetElementType()
+                : typeof(T);
+            if (GetValueMarshaller(valueType) != null)
+            {
+                value = ReadValueFrom(fallbackValue, subsection, key);
+            }
+            else if (GetObjectMarshaller(typeof(T)) != null)
+            {
+                value = ReadObjectFrom(fallbackValue, subsection, key);
+            }
+            else
+            {
+                value = new ConfigProxy<T>(fallbackValue, null, false, delegate { }, delegate { }, delegate { });
+            }
+
+            return value;
+        }
+
         public ConfigProxy<T> ReadValue<T>(T fallbackValue, [CallerMemberName]string key = "")
         {
             return ReadValueFrom(fallbackValue, null, key);
@@ -161,7 +187,7 @@ namespace TinyConfig
 
             T readValue = fallbackValue;
             string readCommentary = null;
-            var kvpIndex = 0;
+            ConfigKVP kvpReference = null;
             bool validKVPFound = false;
             foreach (var kvp in _config.KVPs)
             {
@@ -173,10 +199,10 @@ namespace TinyConfig
                     validKVPFound = isParsed;
                     if (validKVPFound)
                     {
+                        kvpReference = kvp;
                         break;
                     }
                 }
-                kvpIndex++;
             }
             if (!validKVPFound)
             {
@@ -194,8 +220,8 @@ namespace TinyConfig
             {
                 if (!_config.KVPs.IsReadOnly)
                 {
-                    var kvp = pack(fallbackValue, null);
-                    _config.KVPs.Add(kvp);
+                    kvpReference = pack(fallbackValue, null);
+                    _config.KVPs.Add(kvpReference);
                 }
             }
             ConfigKVP pack(T value, string commentary)
@@ -218,21 +244,24 @@ namespace TinyConfig
             }
             void tryUpdateValueInConfigFile(T newValue)
             {
-                if (!_config.KVPs.IsReadOnly)
+                var kvpIndex = _config.KVPs.Find(kvpReference).Index;
+                if (!_config.KVPs.IsReadOnly && kvpIndex != -1)
                 {
-                    _config.KVPs[kvpIndex] = pack(newValue, null);
+                    kvpReference = _config.KVPs[kvpIndex] = pack(newValue, null);
                 }
             }
             void tryUpdateCommentaryInConfigFile(string newValue)
             {
-                if (!_config.KVPs.IsReadOnly)
+                var kvpIndex = _config.KVPs.Find(kvpReference).Index;
+                if (!_config.KVPs.IsReadOnly && kvpIndex != -1)
                 {
-                    _config.KVPs[kvpIndex] = pack(proxy.Value, newValue);
+                    kvpReference = _config.KVPs[kvpIndex] = pack(proxy.Value, newValue);
                 }
             }
             void tryRemoveValueFromConfigFile()
             {
-                if (!_config.KVPs.IsReadOnly)
+                var kvpIndex = _config.KVPs.Find(kvpReference).Index;
+                if (!_config.KVPs.IsReadOnly && kvpIndex != -1)
                 {
                     _config.KVPs.RemoveAt(kvpIndex);
                     _proxyPaths.Remove(path);
@@ -320,13 +349,13 @@ namespace TinyConfig
 
         public ConfigProxy<T> ReadObject<T>(T fallbackValue, [CallerMemberName]string key = "")
         {
-            return ReadObjectFrom<T>(fallbackValue, null, typeof(T), key);
+            return readObjectFrom<T>(fallbackValue, null, typeof(T), key);
         }
         public ConfigProxy<T> ReadObjectFrom<T>(T fallbackValue, string subsection, [CallerMemberName]string key = "")
         {
-            return ReadObjectFrom<T>(fallbackValue, subsection, typeof(T), key);
+            return readObjectFrom<T>(fallbackValue, subsection, typeof(T), key);
         }
-        public ConfigProxy<T> ReadObjectFrom<T>(T fallbackValue, string subsection, Type valueType, [CallerMemberName]string key = "")
+        ConfigProxy<T> readObjectFrom<T>(T fallbackValue, string subsection, Type valueType, [CallerMemberName]string key = "")
         {
             var path = $".{subsection}.{key}.{key}";
             if (_proxyPaths.Contains(path))
@@ -334,7 +363,7 @@ namespace TinyConfig
                 throw new InvalidOperationException("Значение с данным ключем уже было прочитано");
             }
 
-            var marshaller = getMarshaller();
+            var marshaller = GetObjectMarshaller(valueType);
             var section = new Section(new Section(_config.RootSection, subsection), key);
             if (marshaller == null)
             {
@@ -373,12 +402,6 @@ namespace TinyConfig
 
             ////////////////////////////////////////////////////
 
-            ObjectMarshaller getMarshaller()
-            {
-                return ArrayUtils
-                    .ConcatSequences(_userObjectMarshallers, _standarsObjectMarshallers)
-                    .FirstOrDefault(m => m.IsTypeSupported(valueType));
-            }
             void tryAppendKVP()
             {
                 if (!_config.KVPs.IsReadOnly)
@@ -425,6 +448,12 @@ namespace TinyConfig
             return ArrayUtils
                 .ConcatSequences(_userValueMarshallers[ValueMarshallerType.EXACT], _standardValueMarshallers[ValueMarshallerType.EXACT],
                                  _userValueMarshallers[ValueMarshallerType.MULTIPLE], _standardValueMarshallers[ValueMarshallerType.MULTIPLE])
+                .FirstOrDefault(m => m.IsTypeSupported(valueType));
+        }
+        internal ObjectMarshaller GetObjectMarshaller(Type valueType)
+        {
+            return ArrayUtils
+                .ConcatSequences(_userObjectMarshallers, _standarsObjectMarshallers)
                 .FirstOrDefault(m => m.IsTypeSupported(valueType));
         }
 

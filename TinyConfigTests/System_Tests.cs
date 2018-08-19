@@ -16,6 +16,42 @@ namespace TinyConfig.Tests
     public class System_Tests
     {
         [Test()]
+        public void RemoveValues()
+        {
+            var config = Configurable.CreateConfig("RemoveValues").Clear();
+            var value1 = config.ReadValue(1, "Int1");
+            var value2 = config.ReadValue(2, "Int2");
+            var value3 = config.ReadValue(3, "Int3");
+
+            value1.Remove();
+            value3.Remove();
+
+            var actual = config.ToString();
+            var expected = @"Int2=2" + Global.NL;
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void RemoveObjects()
+        {
+            var config = Configurable.CreateConfig("RemoveObjects").Clear();
+            var value1 = config.ReadObject(new V2(1, 2), "V1");
+            var value2 = config.ReadObject(new V2(3, 4), "V2");
+            var value3 = config.ReadObject(new V2(5, 6), "V3");
+
+            value1.Remove();
+            value3.Remove();
+
+            var actual = config.ToString();
+            var expected = @"[V2]
+X=3
+Y=4" + Global.NL;
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
         public void OpenSameConfigAsReadOnly()
         {
             var config1 = Configurable.CreateConfig("OpenSameConfigAsReadOnly", "Access", ConfigAccess.READ_ONLY);
@@ -249,6 +285,24 @@ SomeDouble=1.3" + Global.NL;
         }
 
         [Test()]
+        public void WriteMixedTypesThroughRead()
+        {
+            var config = Configurable.CreateConfig("WriteMixedTypesThroughRead").Clear();
+            config.Read(0, "Int32");
+            config.Read(new V2(1, 2), "V2");
+            config.Read(3.3, "Double");
+
+            var actual = config.ToString();
+            var expected = @"Int32=0
+Double=3.3
+[V2]
+X=1
+Y=2" + Global.NL;
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
         public void WriteCommentary()
         {
             var config = Configurable.CreateConfig("WriteCommentary", "SomeDir").Clear();
@@ -308,6 +362,32 @@ Y=2
 [Object2]
 X=3
 Y=4" + Global.NL;
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void WriteFlatStructObjectsToSubsections()
+        {
+            var config = Configurable.CreateConfig("WriteFlatStructObjectsToSubsections").Clear();
+            config.ReadObjectFrom(new V2(7, 8), "ROOT.SECTION", "Object4");
+            config.ReadObjectFrom(new V2(3, 4), "ROOT", "Object2");
+            config.ReadObjectFrom(new V2(1, 2), null, "Object1");
+            config.ReadObjectFrom(new V2(5, 6), "ROOT", "Object3");
+
+            var actual = config.ToString();
+            var expected = @"[Object1]
+X=1
+Y=2
+[ROOT.Object2]
+X=3
+Y=4
+[ROOT.Object3]
+X=5
+Y=6
+[ROOT.SECTION.Object4]
+X=7
+Y=8" + Global.NL;
 
             Assert.AreEqual(expected, actual);
         }
