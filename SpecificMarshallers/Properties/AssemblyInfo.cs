@@ -32,6 +32,6 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2018.8.19.0341")]
-[assembly: AssemblyFileVersion("2018.8.19.0341")]
+[assembly: AssemblyVersion("2018.8.19.0558")]
+[assembly: AssemblyFileVersion("2018.8.19.0558")]
 [assembly: InternalsVisibleTo("SpecificMarshallersTests")]

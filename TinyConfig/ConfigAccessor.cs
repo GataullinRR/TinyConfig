@@ -240,6 +240,11 @@ namespace TinyConfig
             }
             T cast(dynamic value)
             {
+                if (value == null)
+                {
+                    return value;
+                }
+
                 var valueT = value.GetType();
                 var castToT = typeof(T);
                 if (castToT.IsArray)
@@ -287,9 +292,9 @@ namespace TinyConfig
                 T castAsSingleElement()
                 {
                     var isArrayOfT = valueT.IsArray
-                        ? (((Array)value).Length > 0 ? value[0].GetType() == castToT : false)
+                        ? (((Array)value).Length > 0 ? value?[0]?.GetType() == castToT : false)
                         : false;
-                    if (isArrayOfT)
+                    if (isArrayOfT || (valueT.IsArray && value?[0] == null))
                     {
                         var arr = (Array)value;
                         if (arr.Length == 1)

@@ -567,6 +567,69 @@ SomeV2=X:-9 Y:9
         }
 
         [Test()]
+        public void WriteNullValues()
+        {
+            var config = Configurable.CreateConfig("WriteNullValues").Clear();
+            config.ReadValue<string>(null, "String");
+            config.ReadValue<MemoryStream>(null, "MemoryStream");
+
+            var actual = config.ToString();
+            var expected = @"String=NULL
+MemoryStream=NULL
+";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void WriteArrayOfNullValues()
+        {
+            var config = Configurable.CreateConfig("WriteArrayOfNullValues").Clear();
+            config.ReadValue(
+                new MemoryStream[] { null, null, null },
+                "MemoryStreamArr");
+
+            var actual = config.ToString();
+            var expected = @"MemoryStreamArr=NULL NULL NULL
+";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void WriteArrayOfNullAndNotNullValues()
+        {
+            var config = Configurable.CreateConfig("WriteArrayOfNullAndNotNullValues").Clear();
+            config.ReadValue(
+                new MemoryStream[] { null, new MemoryStream("Hello1".GetASCIIBytes()), null, null }, 
+                "MemoryStreamArr1");
+            config.ReadValue(
+                new MemoryStream[] { new MemoryStream("Hello2".GetASCIIBytes()), null, null },
+                "MemoryStreamArr2");
+            var actual = config.ToString();
+            var expected = @"MemoryStreamArr1=NULL True-SGVsbG8x NULL NULL
+MemoryStreamArr2=True-SGVsbG8y NULL NULL
+";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void ReadNullValues()
+        {
+            var config = Configurable.CreateConfig("ReadNullValues").Clear();
+            config.ReadValue<string>(null, "String");
+            config.ReadValue<MemoryStream>(null, "MemoryStream");
+            config.Close();
+            Configurable.ReleaseFile(config.SourceInfo.FilePath);
+
+            config = Configurable.CreateConfig("ReadNullValues");
+
+            Assert.AreEqual(null, config.ReadValue("", "String").Value);
+            Assert.AreEqual(null, config.ReadValue(new MemoryStream(), "MemoryStream").Value);
+        }
+
+        [Test()]
         public void WriteNullableValueTypes()
         {
             var config = Configurable.CreateConfig("WriteNullableValueTypes").Clear();

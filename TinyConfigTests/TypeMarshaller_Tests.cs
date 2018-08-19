@@ -169,6 +169,37 @@ namespace TinyConfig.Tests
         }
 
         [Test()]
+        public void TryPackUnpack_NullString()
+        {
+            var m = new StringMarshaller();
+            var data = new string[]
+            {
+                 null,
+                 Constants.NULL_VALUE,
+                 Constants.NULL_VALUE.ToLowerInvariant(),
+                 Constants.NULL_VALUE.ToUpperInvariant(),
+                 Constants.NULL_VALUE + "Hello",
+                 " " + Constants.NULL_VALUE,
+                 " " + Constants.NULL_VALUE + "Hello",
+                 Constants.NULL_VALUE_ESCAPE_PERFIX + Constants.NULL_VALUE,
+                 Constants.NULL_VALUE_ESCAPE_PERFIX.ToString(),
+                 "SomeString " + Constants.NULL_VALUE,
+            };
+
+            test(m, data);
+        }
+
+        void test<T>(ValueMarshaller marshaller, IEnumerable<T> datas)
+        {
+            datas.ForEach((data, i) =>
+            {
+                Assert.True(marshaller.TryPack(data, out ConfigValue result));
+                Assert.True(marshaller.TryUnpack(result, typeof(T), out object actualData));
+                Assert.AreEqual(data, actualData);
+            }).ToArray();
+        }
+
+        [Test()]
         public void TryPack_StringArray()
         {
             var m = new StringMarshaller();

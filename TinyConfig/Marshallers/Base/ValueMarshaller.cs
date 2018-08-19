@@ -34,24 +34,32 @@ namespace TinyConfig
 
         internal bool TryPack(object value, out ConfigValue result)
         {
-            result = null;
-            var valueType = value.GetType();
-            if (valueType.IsArray && !IsTypeSupported(valueType))
+            if (value == null)
             {
-                if (ArraySeparator == null)
-                {
-                    throw new ArrayPackingNotSupportedException();
-                }
-
-                return tryPackAllElements(ref result);
-            }
-            else if (IsTypeSupported(valueType))
-            {
-                return tryPack(ref result);
+                result = new ConfigValue(Constants.NULL_VALUE, false);
+                return true;
             }
             else
             {
-                return false;
+                result = null;
+                var valueType = value.GetType();
+                if (valueType.IsArray && !IsTypeSupported(valueType))
+                {
+                    if (ArraySeparator == null)
+                    {
+                        throw new ArrayPackingNotSupportedException();
+                    }
+
+                    return tryPackAllElements(ref result);
+                }
+                else if (IsTypeSupported(valueType))
+                {
+                    return tryPack(ref result);
+                }
+                else
+                {
+                    return false;
+                }
             }
 
             ///////////////////////////////////////
@@ -61,6 +69,7 @@ namespace TinyConfig
                 var arr = (Array)value;
                 var packedValues = arr.ToEnumerable().Select(v =>
                 {
+#warning
                     var isOk = TryPack(v, out ConfigValue configValue);
                     return isOk ? configValue : null;
                 }).ToArray();
@@ -91,11 +100,36 @@ namespace TinyConfig
                 var isPacked = TryPack(value, out string valueText);
                 if (isPacked)
                 {
+                    valueText = escapeNull();
                     var isMultiline = IsAlwaysMultiline || valueText.Contains(Global.NL);
                     packed = new ConfigValue(valueText, isMultiline);
                 }
 
                 return isPacked;
+
+                string escapeNull()
+                {
+                    var escaped = valueText;
+                    var nullEntity = valueText.Find(Constants.NULL_VALUE);
+                    if (nullEntity.Found)
+                    {
+                        var hasToBeEscaped = valueText
+                            .Take(nullEntity.Index)
+                            .SkipWhile(char.IsWhiteSpace)
+                            .All(c => c == Constants.NULL_VALUE_ESCAPE_PERFIX);
+                        if (hasToBeEscaped)
+                        {
+                            escaped = new Enumerable<char>()
+                                {
+                                    valueText.Take(nullEntity.Index),
+                                    Constants.NULL_VALUE_ESCAPE_PERFIX,
+                                    valueText.Skip(nullEntity.Index)
+                                }.Aggregate();
+                        }
+                    }
+
+                    return escaped;
+                }
             }
         }
         internal bool TryUnpack(ConfigValue packed, Type supposedType, out object result)
@@ -104,9 +138,7 @@ namespace TinyConfig
             {
                 var dd = packed.Value.Split(ArraySeparator).Select(val =>
                 {
-                    var unpacked = TryUnpack(val, supposedType, out object specificResult);
-                               // && (supposedType == specificResult?.GetType() 
-                               // || supposedType == specificResult?.GetType()?.GetElementType());
+                    var unpacked = tryUnpackWithNullEscaping(val, supposedType, out object specificResult);
                     return new { unpacked, specificResult };
                 });
 
@@ -123,12 +155,44 @@ namespace TinyConfig
             }
             else
             {
-                var unpacked = TryUnpack(packed.Value, supposedType, out object specificResult);
+                var unpacked = tryUnpackWithNullEscaping(packed.Value, supposedType, out object specificResult);
                 result = specificResult;
                 return unpacked;
             }
+
+            ///////////////////////////////////
+
+            bool tryUnpackWithNullEscaping(string pckd, Type type, out object rslt)
+            {
+                rslt = null;
+                var nullEntity = pckd.Find(Constants.NULL_VALUE);
+                var isNull = false;
+                if (nullEntity.Found)
+                {
+                    var gap = pckd.Take(nullEntity.Index).SkipWhile(char.IsWhiteSpace);
+                    isNull = gap.IsEmpty();
+
+                    if (!isNull && gap.All(c => c == Constants.NULL_VALUE_ESCAPE_PERFIX))
+                    {
+                        pckd = new Enumerable<char>()
+                        {
+                            pckd.Take(nullEntity.Index - 1),
+                            pckd.Skip(nullEntity.Index),
+                        }.Aggregate();
+                    }
+                }
+                return isNull
+                    ? true
+                    : TryUnpack(pckd, type, out rslt);
+            }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value">Always not null.</param>
+        /// <param name="result"></param>
+        /// <returns></returns>
         public abstract bool TryPack(object value, out string result);
         public abstract bool TryUnpack(string packed, Type supposedType, out object result);
     }

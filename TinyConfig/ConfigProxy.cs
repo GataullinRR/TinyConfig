@@ -60,11 +60,6 @@ namespace TinyConfig
             _remove();
         }
 
-        //internal ConfigProxy<TTo> CastTo<TTo>()
-        //    where TTo : T
-        //{
-        //    return new ConfigProxy<TTo>((TTo)Value, Commentary, IsRead, v => _valueUpdater(v), _commentaryUpdater);
-        //}
         internal ConfigProxy<object> CastToRoot()
         {
             return new ConfigProxy<object>(Value, Commentary, IsRead, v => _valueUpdater((T)v), _commentaryUpdater, _remove);

@@ -18,7 +18,7 @@ namespace TinyConfig.Marshallers
         public override bool TryPack(MemoryStream value, out string result)
         {
             var isFixedSize = value.IsFixedSize();
-            result = $"{isFixedSize} {value.ToArray().ToBase64()}";
+            result = $"{isFixedSize}-{value.ToArray().ToBase64()}";
 
             return true;
         }
