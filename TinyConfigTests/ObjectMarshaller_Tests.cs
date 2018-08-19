@@ -58,7 +58,7 @@ namespace TinyConfig.Tests
         public void TryPack_FlatStructure()
         {
             var config = Configurable.CreateConfig("TryPack_FlatStructure", "ObjectMarshaller_IntegrationalTests").Clear();
-            var proxy = new Proxy(config, "Object1");
+            var proxy = new ConfigAccessorProxy(config, "Object1");
 
             var m = new FlatStructObjectMarshaller();
             Assert.True(m.TryPack(proxy, new V2(1, 2)));
@@ -77,7 +77,7 @@ Y=2
         public void TryPack_FlatStructureWithPrivateFields()
         {
             var config = (ConfigAccessor)Configurable.CreateConfig("TryPack_FlatStructureWithPrivateFields", "ObjectMarshaller_IntegrationalTests").Clear();
-            var proxy = new Proxy(config, "Object1");
+            var proxy = new ConfigAccessorProxy(config, "Object1");
 
             var m = new FlatStructObjectMarshaller();
             Assert.True(m.TryPack(proxy, new FlatStructWithPrivateFields(1, 2, 3, 4)));
@@ -98,7 +98,7 @@ X4=4
         public void TryPack_NotFlatStructure()
         {
             var config = (ConfigAccessor)Configurable.CreateConfig("TryPack_NotFlatStructure", "ObjectMarshaller_IntegrationalTests").Clear();
-            var proxy = new Proxy(config, "Object1");
+            var proxy = new ConfigAccessorProxy(config, "Object1");
 
             var m = new FlatStructObjectMarshaller();
             Assert.False(m.TryPack(proxy, new NotFlatStruct(new V2(1, 2))));

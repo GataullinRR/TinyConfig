@@ -56,6 +56,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigAccessor.cs" />
+    <Compile Include="ConfigAccessorProxy.cs" />
     <Compile Include="ConfigKVP.cs" />
     <Compile Include="ConfigProxy.cs" />
     <Compile Include="ConfigReaderWriter.cs" />
@@ -64,12 +65,13 @@
     <Compile Include="Configurable.cs" />
     <Compile Include="ConfigValue.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="IConfigAccessor.cs" />
+    <Compile Include="IConfigAccessorProxy.cs" />
     <Compile Include="KVPExtractor.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\LogFactory.cs" />
     <Compile Include="Marshallers\Base\ArrayPackingNotSupportedException.cs" />
     <Compile Include="Marshallers\Base\ExactValueMarshaller.cs" />
+    <Compile Include="Marshallers\ListMarshaller.cs" />
     <Compile Include="Marshallers\TimeSpanMarshaller.cs" />
     <Compile Include="Marshallers\DateTimeOffsetMarshaller.cs" />
     <Compile Include="Marshallers\DateTimeMarshaller.cs" />

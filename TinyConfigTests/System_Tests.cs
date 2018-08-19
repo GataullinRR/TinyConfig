@@ -618,6 +618,15 @@ SomeV2=X:-9 Y:9
         }
 
         [Test()]
+        public void ReadArray()
+        {
+            var stream = "Arr=1 2 3".GetBytes(Encoding.UTF8).ToMemoryStream();
+            var config = Configurable.CreateConfig(stream);
+
+            Assert.AreEqual(new[] { 1, 2, 3 }, config.ReadValue(new int[0], "Arr").Value);
+        }
+
+        [Test()]
         public void WriteValueAfterClose()
         {
             var config = Configurable.CreateConfig("ReadValue_WriteValueAfterClose").Clear();

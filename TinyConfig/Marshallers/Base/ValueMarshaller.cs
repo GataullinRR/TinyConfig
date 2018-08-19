@@ -104,8 +104,9 @@ namespace TinyConfig
             {
                 var dd = packed.Value.Split(ArraySeparator).Select(val =>
                 {
-                    var unpacked = TryUnpack(val, supposedType, out object specificResult) && 
-                                   supposedType.IsAssignableFrom(specificResult?.GetType());
+                    var unpacked = TryUnpack(val, supposedType, out object specificResult);
+                               // && (supposedType == specificResult?.GetType() 
+                               // || supposedType == specificResult?.GetType()?.GetElementType());
                     return new { unpacked, specificResult };
                 });
 
