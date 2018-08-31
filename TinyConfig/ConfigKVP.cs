@@ -2,7 +2,7 @@
 
 namespace TinyConfig
 {
-    class ConfigKVP : IEquatable<ConfigKVP>
+    class ConfigKVP : ConfigEntity, IEquatable<ConfigKVP>
     {
         public Section Section { get; }
         public string Key { get; }
@@ -15,6 +15,7 @@ namespace TinyConfig
 
         }
         public ConfigKVP(Section section, string key, ConfigValue value, string commentary)
+            :base(Types.KVP)
         {
             Section = section;
             Key = key;
@@ -22,9 +23,7 @@ namespace TinyConfig
             Commentary = commentary;
         }
 
-
-
-        public override string ToString()
+        public override string AsText()
         {
             var shieldedValue = Value.Value
                 .Replace(Constants.BLOCK_MARK.ToString(), string.Concat(Constants.BLOCK_MARK, Constants.BLOCK_MARK));
@@ -32,14 +31,19 @@ namespace TinyConfig
                 ? $"{Key}{Constants.KVP_SEPERATOR}{Constants.MULTILINE_VALUE_MARK}" +
                     $"{Constants.BLOCK_MARK}{shieldedValue}{Constants.BLOCK_MARK}"
                 : $"{Key}{Constants.KVP_SEPERATOR}{shieldedValue}";
-            return string.IsNullOrEmpty(Commentary) 
+            return string.IsNullOrEmpty(Commentary)
                 ? withoutComment
                 : $"{withoutComment}{Constants.COMMENT_SEPARATOR}{Commentary}";
         }
 
+        public override string ToString()
+        {
+            return AsText();
+        }
+
         public override int GetHashCode()
         {
-            return new { Key, Value }.GetHashCode();
+            return new { Key, Value, Section, Commentary }.GetHashCode();
         }
 
         public override bool Equals(object obj)

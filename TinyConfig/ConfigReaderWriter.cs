@@ -1,5 +1,6 @@
 ﻿using MVVMUtilities.Types;
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
@@ -10,6 +11,33 @@ using Utilities.Types;
 
 namespace TinyConfig
 {
+    abstract class ConfigEntity
+    {
+        public enum Types
+        {
+            SECTION,
+            KVP,
+        }
+
+        public Types Type { get; }
+
+        public ConfigEntity(Types type)
+        {
+            Type = type;
+        }
+
+        public abstract string AsText();
+
+        public override int GetHashCode()
+        {
+            throw new NotImplementedException();
+        }
+        public override bool Equals(object obj)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     class ConfigReaderWriter
     {
         readonly Stream _file;
@@ -35,31 +63,94 @@ namespace TinyConfig
 
         void Config_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            var sections = from g in KVPs.Group(v => v.Section, (a, b) => a.Equals(b))
-                           orderby g.Key.Order
-                           orderby g.Key.FullName
-                           select new { Section = g.Key, Body = g.ToArray() };
+            var sections = getSectionsFromKVPs();
+            insertEmptyRootSections();
+            restoreTree();
 
-            _file.SetLength(0);
-            var writer = new StreamWriter(_file, _encoding);
-            foreach (var group in sections)
+            var configEntities = getEntities();
+            updateFile();
+
+            ////////////////////////////////////////
+
+            List<Section> getSectionsFromKVPs()
             {
-                if (!group.Section.IsInsideSection(RootSection.FullName))
+                var ss = new List<Section>();
+                foreach (var section in KVPs.Select(kvp => kvp.Section).Distinct())
                 {
-                    throw new InvalidOperationException();
+                    ss.Add(section);
                 }
+                return ss;
+            }
 
-                if (group.Section != null && !group.Section.IsRoot)
+            void insertEmptyRootSections()
+            {
+                bool valid = true;
+                do
                 {
-                    writer.WriteLine(group.Section.ToString());
+                    valid = true;
+                    Section newEntity = null;
+                    foreach (var section in sections)
+                    {
+                        if (!section.HasParentDirect(sections) && !section.IsRoot)
+                        {
+                            newEntity = section.GetParent();
+                            valid = false;
+                            break;
+                        }
+                    }
+                    if (!valid)
+                    {
+                        sections.Add(newEntity);
+                    }
                 }
-                foreach (var kvp in group.Body)
+                while (!valid);
+            }
+
+            void restoreTree()
+            {
+                sections.Sort();
+                for (int i = 0; i < sections.Count; i++)
                 {
-                    writer.WriteLine(kvp.ToString());
+                    var section = sections[i];
+                    var children = section.FindDirectChildren(sections.Skip(i)).ToArray();
+                    foreach (var index in children.GetIndexes().Reverse())
+                    {
+                        sections.RemoveAt(index + i);
+                    }
+                    sections.InsertRange(i + 1, children.GetValues());
                 }
             }
-            writer.Flush();
-            _file.Flush();
+
+            List<ConfigEntity> getEntities()
+            {
+                var entities = new List<ConfigEntity>(sections.Count + KVPs.Count);
+                foreach (var section in sections)
+                {
+                    entities.Add(section);
+                    foreach (var kvp in KVPs)
+                    {
+                        if (kvp.Section.Equals(section))
+                        {
+                            entities.Add(kvp);
+                        }
+                    }
+                }
+                entities.Remove(Section.RootSection);
+
+                return entities;
+            }
+
+            void updateFile()
+            {
+                _file.SetLength(0);
+                var writer = new StreamWriter(_file, _encoding);
+                foreach (var entity in configEntities)
+                {
+                    writer.WriteLine(entity.AsText());
+                }
+                writer.Flush();
+                _file.Flush();
+            }
         }
 
         public void Close()

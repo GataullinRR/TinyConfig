@@ -379,12 +379,14 @@ Y=4" + Global.NL;
             var expected = @"[Object1]
 X=1
 Y=2
+[ROOT]
 [ROOT.Object2]
 X=3
 Y=4
 [ROOT.Object3]
 X=5
 Y=6
+[ROOT.SECTION]
 [ROOT.SECTION.Object4]
 X=7
 Y=8" + Global.NL;
@@ -413,7 +415,16 @@ Y=8" + Global.NL;
             config.ReadObject(new MixedFlatnessStruct(4, new V2(5, 6)), "Object2");
 
             var actual = config.ToString();
-            var expected = @"" + Global.NL;
+            var expected = @"[Object1]
+X1=1
+[Object1.V1]
+X=2
+Y=3
+[Object2]
+X1=4
+[Object2.V1]
+X=5
+Y=6" + Global.NL;
 
             Assert.AreEqual(expected, actual);
         }

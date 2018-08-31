@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Utilities.Extensions;
 
 namespace TinyConfig
 {
-    class Section : IEquatable<Section>
+    class Section : ConfigEntity, IEquatable<Section>, IComparable<Section>
     {
         public static Section InvalidSection = new Section();
         public static Section RootSection = new Section(null);
@@ -14,10 +15,6 @@ namespace TinyConfig
         public bool IsRoot { get; }
         public bool IsCorrect { get; }
 
-        Section()
-        {
-
-        }
         public Section(Section root, string subsection)
             :this(aggregate(root, subsection))
         {
@@ -32,14 +29,23 @@ namespace TinyConfig
             return isRoot ? null : root.FullName + gap + subsection;
         }
         public Section(string fullName)
+            :this()
         {
             FullName = fullName;
             Order = FullName?.FindAll(Constants.SUBSECTION_SEPARATOR)?.Count() + 1 ?? 0;
             IsRoot = FullName == null;
-            IsCorrect = FullName == null
-                || !FullName.EndsWith(Constants.SUBSECTION_SEPARATOR)
-                && !FullName.StartsWith(Constants.SUBSECTION_SEPARATOR)
-                && FullName.Remove(Constants.SUBSECTION_SEPARATOR).All(char.IsLetterOrDigit);
+            IsCorrect = isFullNameValid(FullName);
+        }
+        static bool isFullNameValid(string fullName)
+        {
+            return fullName == null
+                || !fullName.EndsWith(Constants.SUBSECTION_SEPARATOR)
+                && !fullName.StartsWith(Constants.SUBSECTION_SEPARATOR)
+                && fullName.Remove(Constants.SUBSECTION_SEPARATOR).All(char.IsLetterOrDigit);
+        }
+        Section() : base(Types.SECTION)
+        {
+
         }
 
         public bool IsInsideSection(Section section)
@@ -83,6 +89,106 @@ namespace TinyConfig
             }
         }
 
+        public Section GetParent()
+        {
+            throwIfNotCorrect();
+            if (IsRoot)
+            {
+                throw new InvalidOperationException("Root section never has a parent");
+            }
+
+            if (Order == 1)
+            {
+                return RootSection;
+            }
+            else
+            {
+                var parrentEnd = FullName.FindLast(Constants.SUBSECTION_SEPARATOR).Index;
+                var parrent = FullName.Take(parrentEnd).Aggregate();
+
+                return new Section(parrent);
+            }
+        }
+
+        public override string AsText()
+        {
+            return Constants.SECTION_HEADER_OPEN_MARK + FullName + Constants.SECTION_HEADER_CLOSE_MARK;
+        }
+
+
+
+        public bool HasParentDirect(IEnumerable<Section> sections)
+        {
+            //foreach (var curr in sections)
+            //{
+            //    if (curr.Order == Order - 1)
+            //    {
+            //        if (IsInsideSection(curr))
+            //        {
+            //            return true;
+            //        }
+            //    }
+            //}
+            //return false;
+
+            return FindDirectParrent(sections).Found;
+        }
+
+        public FindResult<Section> FindDirectParrent(IEnumerable<Section> sections)
+        {
+            var i = 0;
+            foreach (var currSection in sections)
+            {
+                if (currSection.Order == Order - 1)
+                {
+                    if (IsInsideSection(currSection))
+                    {
+                        return new FindResult<Section>(i, currSection);
+                    }
+                }
+                i++;
+            }
+            return new FindResult<Section>();
+        }
+
+        public IEnumerable<FindResult<Section>> FindDirectChildren(IEnumerable<Section> sections)
+        {
+            var i = 0;
+            foreach (var currSection in sections)
+            {
+                if (currSection.Order == Order + 1)
+                {
+                    if (currSection.IsInsideSection(this))
+                    {
+                        yield return new FindResult<Section>(i, currSection);
+                    }
+                }
+                i++;
+            }
+        }
+
+        void throwIfNotCorrect()
+        {
+            if (!IsCorrect)
+            {
+                throw new InvalidOperationException("This section is not correct");
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="subsections">Null subsections are ignored.</param>
+        /// <returns></returns>
+        public static string ConcatSubsections(params string[] subsections)
+        {
+            return subsections
+                .Where(s => s != null && isFullNameValid(s))
+                .EmptyToNull()
+                ?.Aggregate((acc, val) => acc + Constants.SUBSECTION_SEPARATOR + val)
+                ?.Aggregate() ?? "";
+        }
+
         public override bool Equals(object obj)
         {
             if (obj is Section section)
@@ -101,9 +207,22 @@ namespace TinyConfig
                 && IsCorrect == other.IsCorrect;
         }
 
+        public override int GetHashCode()
+        {
+            return new { IsCorrect, FullName }.GetHashCode();
+        }
+
         public override string ToString()
         {
-            return Constants.SECTION_HEADER_OPEN_MARK + FullName + Constants.SECTION_HEADER_CLOSE_MARK;
+            return AsText();
+        }
+
+        public int CompareTo(Section other)
+        {
+            var order = Order.CompareTo(other.Order);
+            return order == 0
+                ? (FullName?.CompareTo(other.FullName) ?? 0)
+                : order;
         }
 
         ///// <summary>
