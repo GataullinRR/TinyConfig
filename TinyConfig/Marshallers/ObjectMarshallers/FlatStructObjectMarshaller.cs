@@ -22,10 +22,10 @@ namespace TinyConfig.Marshallers
                 foreach (var field in getFields(t))
                 {
                     var v = field.GetValue(value);
-                    var hasMarshaller = configAccessor.HasValueMarshaller(field.FieldType);
+                    var hasMarshaller = configAccessor.HasMarshaller(field.FieldType);
                     if (hasMarshaller)
                     {
-                        configAccessor.WriteValue(field.FieldType, v, field.Name);
+                        configAccessor.WriteTo(field.FieldType, v, null, field.Name);
                     }
                     else
                     {
@@ -43,10 +43,10 @@ namespace TinyConfig.Marshallers
 
             foreach (var field in getFields(supposedType))
             {
-                var hasMarshaller = configAccessor.HasValueMarshaller(field.FieldType);
+                var hasMarshaller = configAccessor.HasMarshaller(field.FieldType);
                 if (hasMarshaller)
                 {
-                    var value = configAccessor.ReadValue(field.FieldType, field.Name);
+                    var value = configAccessor.ReadFrom(field.FieldType, null, field.Name);
                     field.SetValue(result, value.Value);
                 }
                 else

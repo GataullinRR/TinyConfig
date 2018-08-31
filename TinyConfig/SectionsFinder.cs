@@ -70,6 +70,7 @@ namespace TinyConfig
 
             bool validate(Section header)
             {
+                //return header.HasParentDirect(sectionNames.Take(index));
                 for (int i = index - 1; i >= 0; i--)
                 {
                     var curr = sectionNames[i];

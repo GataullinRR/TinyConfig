@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Utilities.Extensions;
 
 namespace TinyConfig
@@ -16,33 +17,39 @@ namespace TinyConfig
             _subsection = subsection;
         }
 
-        public bool HasValueMarshaller(Type type)
+        public bool HasMarshaller(Type type)
         {
-            return _configAccessor.GetValueMarshaller(type) != null;
+            return _configAccessor.GetValueMarshaller(type) != null
+                || _configAccessor.GetObjectMarshaller(type) != null;
         }
 
-        public ConfigProxy<object> ReadValue(Type supposedType, string key)
+        public ConfigProxy<object> ReadFrom(Type supposedType, string subsection, string key)
         {
-            return readValue(supposedType, supposedType.GetDefaultValue(), key);
+            return readValue(supposedType, supposedType.GetDefaultValue(), subsection, key);
         }
 
-        public bool WriteValue(Type valueType, object value, string key)
+        public bool WriteTo(Type valueType, object value, string subsection, string key)
         {
             if (_readValues.ContainsKey(key))
             {
                 _readValues[key].Remove();
                 _readValues.Remove(key);
             }
-            return readValue(valueType, value, key).IsRead;
+            return readValue(valueType, value, subsection, key).IsRead;
         }
 
-        ConfigProxy<object> readValue(Type supposedType, object fallbackValue, string key)
+        ConfigProxy<object> readValue(Type supposedType, object fallbackValue, string subsection, string key)
         {
+            var fullSubsection = Section.ConcatSubsections(_subsection, subsection);
             var typed = typeof(ConfigAccessor)
-                .GetMethod(nameof(ConfigAccessor.ReadValueFrom))
+                .GetMethod(nameof(ConfigAccessor.ReadFrom))
                 .MakeGenericMethod(supposedType)
-                .Invoke(_configAccessor, new object[] { fallbackValue, _subsection, key });
-            var value = (ConfigProxy<object>)((dynamic)typed).CastToRoot();
+                .Invoke(_configAccessor, new object[] { fallbackValue, fullSubsection, key });
+            //Do not work if T is private type defined in another assembly.
+            //var value = (ConfigProxy<object>)((dynamic)typed).CastToRoot();
+            var value = (ConfigProxy<object>)typed.GetType()
+                .GetMethod("CastToRoot", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(typed, new object[] { });
             _readValues.Add(key, value);
 
             return value;

@@ -54,6 +54,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="SectionsTreeBuilder_Tests.cs" />
+    <Compile Include="Section_Tests.cs" />
     <Compile Include="System_Tests.cs" />
     <Compile Include="KVPExtractor_Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

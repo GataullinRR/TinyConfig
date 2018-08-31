@@ -16,6 +16,7 @@ namespace TinyConfig.Tests
     [TestFixture()]
     public class ObjectMarshallers_IntegrationalTests
     {
+        [Serializable]
         struct FlatStructWithPrivateFields
         {
             double X1;
@@ -32,6 +33,7 @@ namespace TinyConfig.Tests
             }
         }
 
+        [Serializable]
         struct NotFlatStruct
         {
             public V2 V1;
@@ -42,6 +44,21 @@ namespace TinyConfig.Tests
             }
         }
 
+        //class TestObject
+        //{
+        //    string Text = "Hello";
+        //}
+        //struct NotFlatStructWithObject
+        //{
+        //    public TestObject Obj;
+
+        //    public NotFlatStructWithObject(TestObject obj)
+        //    {
+        //        Obj = obj;
+        //    }
+        //}
+
+        [Serializable]
         struct MixedFlatnessStruct
         {
             public double X1;
@@ -51,6 +68,19 @@ namespace TinyConfig.Tests
             {
                 X1 = x1;
                 V1 = v1;
+            }
+        }
+
+        [Serializable]
+        struct ThreeLevelNotFlatStruct
+        {
+            public MixedFlatnessStruct Struct;
+            public double SomeValue;
+
+            public ThreeLevelNotFlatStruct(MixedFlatnessStruct @struct, double someValue)
+            {
+                Struct = @struct;
+                SomeValue = someValue;
             }
         }
 
@@ -101,29 +131,58 @@ X4=4
             var proxy = new ConfigAccessorProxy(config, "Object1");
 
             var m = new FlatStructObjectMarshaller();
-            Assert.False(m.TryPack(proxy, new NotFlatStruct(new V2(1, 2))));
+            Assert.True(m.TryPack(proxy, new NotFlatStruct(new V2(1, 2))));
 
             var actual = config.ToString();
-            var expected = @"
+            var expected = @"[Object1]
+[Object1.V1]
+X=1
+Y=2
 ";
 
             Assert.AreEqual(expected, actual);
         }
 
-//        [Test()]
-//        public void TryPack_MixedFlatnessStructure()
-//        {
-//            var config = (ConfigAccessor)Configurable.CreateConfig("TryPack_MixedFlatnessStructure", "ObjectMarshaller_IntegrationalTests").Clear();
-//            var proxy = new Proxy(config, "Object1");
+        [Test()]
+        public void TryPack_MixedFlatnessStructure()
+        {
+            var config = (ConfigAccessor)Configurable.CreateConfig("TryPack_MixedFlatnessStructure", "ObjectMarshaller_IntegrationalTests").Clear();
+            var proxy = new ConfigAccessorProxy(config, "Object1");
 
-//            var m = new FlatStructObjectMarshaller();
-//            Assert.False(m.TryPack(proxy, new MixedFlatnessStruct(1, new V2(2, 3))));
+            var m = new FlatStructObjectMarshaller();
+            Assert.True(m.TryPack(proxy, new MixedFlatnessStruct(1, new V2(2, 3))));
 
-//            var actual = config.ToString();
-//            var expected = @"
-//";
+            var actual = config.ToString();
+            var expected = @"[Object1]
+X1=1
+[Object1.V1]
+X=2
+Y=3
+";
 
-//            Assert.AreEqual(expected, actual);
-//        }
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test()]
+        public void TryPack_ThreeLevelNotFlatStruct()
+        {
+            var config = (ConfigAccessor)Configurable.CreateConfig("TryPack_ThreeLevelNotFlatStruct", "ObjectMarshaller_IntegrationalTests").Clear();
+            var proxy = new ConfigAccessorProxy(config, "Object1");
+
+            var m = new FlatStructObjectMarshaller();
+            Assert.True(m.TryPack(proxy, new ThreeLevelNotFlatStruct(new MixedFlatnessStruct(1, new V2(2, 3)), 4)));
+
+            var actual = config.ToString();
+            var expected = @"[Object1]
+SomeValue=4
+[Object1.Struct]
+X1=1
+[Object1.Struct.V1]
+X=2
+Y=3
+";
+
+            Assert.AreEqual(expected, actual);
+        }
     }
 }
